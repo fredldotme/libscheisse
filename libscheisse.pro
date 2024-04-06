@@ -1,6 +1,5 @@
 TARGET = libscheisse
-TEMPLATE = app
+TEMPLATE = lib
 
 SOURCES += \
-    $$PWD/lib.cpp \
-    $$PWD/main.cpp
+    $$PWD/lib.cpp
