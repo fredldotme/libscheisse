@@ -11,6 +11,16 @@ int main(int argc, char** argv)
 
     std::cout << std::endl;
 
+    std::cout << "Analyse:" << std::endl;
+    const auto analysis = analyse(test);
+    for (const auto& token_analysis : analysis) {
+        std::cout << "\tWord: " << token_analysis.word << std::endl;
+        std::cout << "\tType: " << token_analysis.type << std::endl;
+        std::cout << std::endl;
+    }
+
+    std::cout << std::endl;
+
     std::cout << "Verscheißert:" << std::endl;
     std::cout << verscheissern(test) << std::endl;
     return 0;
