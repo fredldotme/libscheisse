@@ -112,11 +112,15 @@ std::vector<TokenAnalysis> analyse(const std::vector<std::string>& input)
     std::vector<TokenAnalysis> ret;
 
     for (auto it = input.cbegin(); it != input.cend(); it++) {
+        const auto* previous_token = ret.size() > 0 ? &ret[ret.size() - 1] : nullptr;
+
         TokenAnalysis followup_token;
         const std::string word = strip_punctuation(*it, followup_token);
 
         Type type = Type_Unknown;
-        TokenType token_type = TokenType_Unknown;
+        TokenType token_type = (it == input.cbegin()) ? SentenceBeginning : TokenType_Unknown;
+        if (previous_token  && (*previous_token).token_type == SentenceEnd)
+            token_type = SentenceBeginning;
 
         if (article_search(word))
             type = Artikel;
@@ -148,9 +152,13 @@ std::string verscheissern(const std::vector<std::string>& input, const ScheissFl
 
     for (auto it = analysis.cbegin(); it != analysis.cend(); it++) {
         const auto& token = (*it);
+        const auto* look_backward_token = it != analysis.cbegin() ? &(*(it-1)) : nullptr;
+        const auto* peek_forward_token = &(*(it+1));
+
         std::string spe;
 
-        if ((flags & ScheissFlags::BeforeArticles) && token.type == Artikel) {
+        if ((flags & ScheissFlags::BeforeArticles) && token.type == Artikel &&
+             peek_forward_token && (*peek_forward_token).type == Nomen) {
             spe = article_verscheissern(token.word);
         } else {
             spe = token.word;

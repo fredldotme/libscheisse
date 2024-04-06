@@ -4,7 +4,8 @@
 
 int main(int argc, char** argv)
 {
-    const std::string test = "Weil der Dreck nicht geht ist die Scheiße am Dampfen, ist aber i.d.r egal.";
+    const std::string test = "Weil der Dreck nicht geht ist die Scheiße am Dampfen. "
+                             "Das ist aber i.d.r egal wenn der Hopfen fehlt.";
 
     std::cout << "Eingabe:" << std::endl;
     std::cout << test << std::endl;
@@ -15,6 +16,7 @@ int main(int argc, char** argv)
     const auto analysis = analyse(test);
     for (const auto& token_analysis : analysis) {
         std::cout << "\tWord: " << token_analysis.word << std::endl;
+        std::cout << "\tToken type: " << token_analysis.token_type << std::endl;
         std::cout << "\tType: " << token_analysis.type << std::endl;
         std::cout << std::endl;
     }
