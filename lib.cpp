@@ -52,12 +52,55 @@ static inline bool fuzzy_search(const std::string& source_term, const std::strin
     return source.find(test) == std::string::npos && source.length() < test.length();
 }
 
-static inline bool article_search(const std::string& source_term)
+static inline bool article_search(const std::string& term)
 {
     static const std::array<std::string, 3> articles = {"der", "die", "das"};
     for (const auto& article : articles) {
-        if (insensitive_search(source_term, article))
-           return true;
+        if (insensitive_search(term, article))
+            return true;
+    }
+    return false;
+}
+
+static inline bool adverb_search(const std::string& term) {
+    static const std::array<std::string, 228> adverbs = {
+        "abends", "aber", "alle", "allein", "allerdings", "allzu", "alsbald", "also",
+        "andererseits", "andernfalls", "anders", "anfangs", "auch", "aufwärts", "aussen",
+        "ausserdem", "bald", "beieinander", "beinahe", "beizeiten", "bekanntlich",
+        "bereits", "besonders", "bestens", "bisher", "bisschen", "bloss", "dabei",
+        "dadurch", "dafür", "damals", "damit", "danach", "daneben", "dann", "daran",
+        "darauf", "daraus", "darin", "darüber", "darum", "davon", "dazu", "dazwischen",
+        "demnach", "derart", "dereinst", "deshalb", "deswegen", "doch", "dort", "dorther",
+        "dorthin", "draussen", "drüben", "durchaus", "ebenso", "ehedem", "ehemals",
+        "eher", "eigentlich", "eilends", "einfach", "einigermassen", "einmal", "eins",
+        "einst", "einstmals", "endlich", "entgegen", "erst", "etwa", "etwas", "fast",
+        "folglich", "fortan", "freilich", "ganz", "gegebenenfalls", "genug", "gern",
+        "gestern", "gleich", "gleichfalls", "gleichwohl", "glücklicherweise", "günstigenfalls",
+        "her", "heraus", "herein", "herum", "herunter", "heute", "hier", "hierauf", "hierbei",
+        "hierdurch", "hierfür", "hierher", "hierhin", "hiermit", "hierzu", "hin", "hinauf",
+        "hinein", "hinten", "hinterher", "hinunter", "höchstens", "hoffentlich", "immer",
+        "innen", "irgendwo", "ja", "jawohl", "jedenfalls", "jemals", "jetzt", "kaum",
+        "keinesfalls", "keineswegs", "kopfüber", "kurzerhand", "leider", "links", "los",
+        "mal", "manchmal", "mehrmals", "meist", "meistens", "minder", "mindestens",
+        "miteinander", "mithin", "mittags", "mittlerweile", "möglicherweise", "morgen",
+        "morgens", "nacheinander", "nachher", "nächstens", "nachts",
+        "nebenbei", "nebeneinander", "nein", "nicht", "nie", "niemals", "nirgends",
+        "noch", "nochmals", "nötigenfalls", "nun", "nur", "oben", "oft", "öfters",
+        "rechts,", "ringsum", "ringsumher", "rückwärts", "rundum", "schliesslich",
+        "schlimmstenfalls", "schon", "schwerlich", "sehr", "seinerzeit", "seither",
+        "seitwärts", "sicherlich", "so", "sodann", "soeben", "sofort", "sogar",
+        "sogleich", "sonst", "stets", "tagsüber", "trotzdem", "überall", "überallhin",
+        "überaus", "überdies", "überhaupt", "übrigens", "umsonst", "ungefähr", "ungestraft",
+        "unglücklicherweise", "unten", "unterdessen", "untereinander", "unterwegs",
+        "vergebens", "vermutlich", "vielleicht", "vielmals", "vielmehr", "vorbei", "vordem",
+        "vorgestern", "vorher", "vorhin", "vormals", "vorn", "vorne", "wann", "warum",
+        "weg", "weitaus", "weiter", "wenigstens", "wieder", "wiederum", "wirklich", "wo",
+        "wohl", "zeitlebens", "zeitweise", "zuerst", "zugleich", "zuletzt", "zusammen", "zuweilen"
+    };
+    for (const auto& adverb : adverbs) {
+        const auto input = to_lowercase(term);
+        if (strict_search(adverb, input))
+            return true;
     }
     return false;
 }
@@ -86,6 +129,11 @@ static inline bool nomen_check(const std::string& word)
 static inline std::string article_verscheissern(const std::string& article)
 {
     return article + std::string(" scheiß");
+}
+
+static inline std::string nomen_verscheissern(const std::string& nomen)
+{
+    return std::string("scheiß ") + nomen;
 }
 
 static inline std::string strip_punctuation(const std::string& word, TokenAnalysis& followup_token)
@@ -131,6 +179,8 @@ std::vector<TokenAnalysis> analyse(const std::vector<std::string>& input)
 
         if (article_search(word))
             type = Artikel;
+        else if (adverb_search(word))
+            type = Adverb;
         else if (subjunction_search(word))
             type = Subjunktion;
         // Check whether its a Nomen later to avoid beginnings of sentences to be misdetected.
@@ -165,11 +215,19 @@ std::string verscheissern(const std::vector<std::string>& input, const ScheissFl
         std::string spe;
 
         if ((flags & ScheissFlags::BeforeArticles) && token.type == Artikel &&
-             peek_forward_token && (*peek_forward_token).type == Nomen) {
+            peek_forward_token && (*peek_forward_token).type == Nomen) {
             spe = article_verscheissern(token.word);
+        } else if ((flags & ScheissFlags::BeforeNomen) && token.type == Nomen &&
+                   /*TODO: Remove token_type check once smarter*/
+                   token.token_type != SentenceBeginning) {
+            spe = nomen_verscheissern(token.word);
         } else {
             spe = token.word;
         }
+
+        // Capitalize beginning of a sentence
+        if (!token.word.empty() && token.token_type == SentenceBeginning)
+            spe[0] = std::toupper(spe[0]);
 
         ret += spe;
         if (token.word != *input.cend())

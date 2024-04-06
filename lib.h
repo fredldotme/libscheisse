@@ -53,7 +53,8 @@ enum TokenType {
 enum ScheissFlags {
     BeforeArticles = (1 << 0),
     RepeatArticle = (1 << 1),
-    Default = BeforeArticles
+    BeforeNomen = (1 << 2),
+    Default = BeforeArticles | BeforeNomen
 };
 
 struct TokenAnalysis {
