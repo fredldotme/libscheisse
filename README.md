@@ -25,3 +25,7 @@ Alfred Neumayer (C) 2024
 ## License
 
 This library and test code is available under the terms of the BSD 3-clause license.
+
+## Further notes
+
+Built using [Tide IDE](https://apps.apple.com/at/app/tide-ide/id6450320573)
