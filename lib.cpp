@@ -3,6 +3,18 @@
 #include <algorithm>
 #include <array>
 #include <cctype>
+#include <sstream>
+
+static inline std::vector<std::string> split_string(const std::string& to_split)
+{
+    std::istringstream split_stream(to_split);
+    std::vector<std::string> ret;
+    std::string tmp;
+    while (std::getline(split_stream, tmp, ' ')) {
+        ret.push_back(tmp);
+    }
+    return ret;
+}
 
 static inline std::string transform_lowercase(const std::string& source)
 {
@@ -68,3 +80,9 @@ std::string verscheissern(const std::vector<std::string>& input, const ScheissFl
 
     return ret;
 }
+
+std::string verscheissern(const std::string& input, const ScheissFlags flags)
+{
+    return verscheissern(split_string(input));
+}
+

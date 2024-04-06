@@ -49,5 +49,6 @@ enum ScheissFlags {
 };
 
 std::string verscheissern(const std::vector<std::string>& input, const ScheissFlags flags = Default);
+std::string verscheissern(const std::string& input, const ScheissFlags flags = Default);
 
 #endif
