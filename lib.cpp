@@ -3,6 +3,50 @@
 #include <algorithm>
 #include <array>
 
+// As in "In Spe", determines potentially resulting word
+struct Spe {
+    std::string word;
+    bool regular; // False means Verscheisserung
+};
+
+struct Alternative {
+    std::string word;
+    Genus genus;
+    Case kasus;
+};
+
+static const std::array<Alternative, 3> alternatives = {
+    Alternative{"", AllGeni, Case_Unknown},
+    Alternative{"scheiß", AllGeni, Case_Unknown},
+    Alternative{"beschissene", AllGeni, Case_Unknown}
+};
+
+static const unsigned char question_mark = '?';
+static const unsigned char exclamation_mark = '!';
+static const unsigned char period = '.';
+
+static inline bool contains_alternative(const std::string& term, std::string* found_alternative)
+{
+    for (const auto& alternative : alternatives) {
+        if (term.find(alternative.word) != std::string::npos) {
+            if (found_alternative)
+                *found_alternative = alternative.word;
+            return true;
+        }
+    }
+    return false;
+}
+
+static inline bool contains_alternative(const std::string& term)
+{
+    return contains_alternative(term, nullptr);
+}
+
+static inline std::string random_scheiss()
+{
+    return alternatives[rand() % alternatives.size()].word;
+}
+
 static inline std::vector<std::string> split_string(const std::string& to_split)
 {
     std::vector<std::string> ret;
@@ -24,6 +68,18 @@ static inline std::vector<std::string> split_string(const std::string& to_split)
     return ret;
 }
 
+static inline std::string join_string(const std::vector<std::string>& to_join)
+{
+    std::string ret;
+    for (auto it = to_join.cbegin(); it != to_join.cend(); it++) {
+        const auto& joinable = *it;
+        ret += joinable;
+        if (it+1 != to_join.cend())
+            ret += " ";
+    }
+    return ret;
+}
+
 static inline std::string to_lowercase(const std::string& source)
 {
     std::string ret;
@@ -31,6 +87,36 @@ static inline std::string to_lowercase(const std::string& source)
         ret += static_cast<unsigned char>(std::tolower(c));
     }
     return ret;
+}
+
+static inline std::vector<std::string>::const_iterator find_duplicates(const std::vector<std::string>& clearable,
+                                                                       const std::vector<std::string>& reference)
+{
+    for (auto fit = clearable.cbegin(); fit != clearable.cend(); fit++) {
+        const auto& first_needle = *fit;
+        for (auto sit = reference.cbegin(); sit != reference.cend(); sit++) {
+            const auto& second_needle = *sit;
+            if (first_needle == second_needle) {
+                return fit;
+            }
+        }
+    }
+    return clearable.end();
+}
+
+static inline std::vector<Spe>::const_iterator find_duplicate_spes(const std::vector<Spe>& clearable,
+                                                                   const std::vector<Spe>& reference)
+{
+    for (auto fit = clearable.cbegin(); fit != clearable.cend(); fit++) {
+        const auto& first_needle = *fit;
+        for (auto sit = reference.cbegin(); sit != reference.cend(); sit++) {
+            const auto& second_needle = *sit;
+            if (!first_needle.regular && first_needle.word == second_needle.word) {
+                return fit;
+            }
+        }
+    }
+    return clearable.cend();
 }
 
 static inline bool strict_search(const std::string& source_term, const std::string& search_term)
@@ -126,21 +212,28 @@ static inline bool nomen_check(const std::string& word)
     return word.length() >= 2 && word[0] == std::toupper(word[0]) && word[1] == std::tolower(word[1]);
 }
 
-static inline std::string article_verscheissern(const std::string& article)
+static inline std::vector<Spe> article_verscheissern(const std::string& article)
 {
-    return article + std::string(" scheiß");
+    std::vector<Spe> ret;
+    ret.push_back({article, true});
+    const auto scheiss = random_scheiss();
+    if (!scheiss.empty())
+        ret.push_back({scheiss, false});
+    return ret;
 }
 
-static inline std::string nomen_verscheissern(const std::string& nomen)
+static inline std::vector<Spe> nomen_verscheissern(const std::string& nomen)
 {
-    return std::string("scheiß ") + nomen;
+    std::vector<Spe> ret;
+    const auto scheiss = random_scheiss();
+    if (!scheiss.empty())
+        ret.push_back({scheiss, false});
+    ret.push_back({nomen, true});
+    return ret;
 }
 
 static inline std::string strip_punctuation(const std::string& word, TokenAnalysis& followup_token)
 {
-    static const unsigned char question_mark = '?';
-    static const unsigned char exclamation_mark = '!';
-    static const unsigned char period = '.';
     static const std::array<unsigned char, 6> punctuations = {',', ':', ';', period, question_mark, exclamation_mark };
 
     // Optimize short hand writing without stripping periods
@@ -150,11 +243,12 @@ static inline std::string strip_punctuation(const std::string& word, TokenAnalys
     std::string ret;
     for (const auto& c : word) {
         if (std::find(punctuations.begin(), punctuations.end(), c) != std::end(punctuations)) {
-            if (c == period || c == exclamation_mark || c == question_mark) {
-                const std::string punctuation(1, c);
-                followup_token.word = punctuation;
+            const std::string punctuation(1, c);
+            followup_token.word = punctuation;
+            if (c == period || c == question_mark || c == exclamation_mark)
                 followup_token.token_type = SentenceEnd;
-            }
+            else
+                followup_token.token_type = Unmeaning;
             continue;
         }
         ret += c;
@@ -204,37 +298,49 @@ std::vector<TokenAnalysis> analyse(const std::string& input)
 
 std::string verscheissern(const std::vector<std::string>& input, const ScheissFlags flags)
 {
-    std::string ret;
+    std::vector<std::string> ret;
+    std::vector<Spe> previous_spes;
     const auto analysis = analyse(input);
 
     for (auto it = analysis.cbegin(); it != analysis.cend(); it++) {
-        const auto& token = (*it);
+        auto token = (*it);
         const auto* look_backward_token = it != analysis.cbegin() ? &(*(it-1)) : nullptr;
         const auto* peek_forward_token = &(*(it+1));
 
-        std::string spe;
+        // Capitalize beginning of a sentence
+        if (!token.word.empty() && token.token_type == SentenceBeginning)
+            token.word[0] = std::toupper(token.word[0]);
+
+        // Like "In Spe"
+        std::vector<Spe> spes;
 
         if ((flags & ScheissFlags::BeforeArticles) && token.type == Artikel &&
             peek_forward_token && (*peek_forward_token).type == Nomen) {
-            spe = article_verscheissern(token.word);
+            spes = article_verscheissern(token.word);
         } else if ((flags & ScheissFlags::BeforeNomen) && token.type == Nomen &&
                    /*TODO: Remove token_type check once smarter*/
-                   token.token_type != SentenceBeginning) {
-            spe = nomen_verscheissern(token.word);
+                       token.token_type != SentenceBeginning) {
+            spes = nomen_verscheissern(token.word);
         } else {
-            spe = token.word;
+            spes.push_back({token.word, true});
         }
 
-        // Capitalize beginning of a sentence
-        if (!token.word.empty() && token.token_type == SentenceBeginning)
-            spe[0] = std::toupper(spe[0]);
+        // Avoid duplicates
+        for (auto dit = find_duplicate_spes(spes, previous_spes); dit != spes.cend();) {
+            if (!((*dit).regular))
+                dit = spes.erase(dit);
+            else
+                ++dit;
+        }
 
-        ret += spe;
-        if (token.word != *input.cend())
-            ret += " ";
+        // Add to the result(s)
+        for (const auto& spe : spes) {
+            ret.push_back(spe.word);
+        }
+        previous_spes = spes;
     }
 
-    return ret;
+    return join_string(ret);
 }
 
 std::string verscheissern(const std::string& input, const ScheissFlags flags)

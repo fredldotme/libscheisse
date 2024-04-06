@@ -43,8 +43,16 @@ enum Type {
     Subjunktion
 };
 
+enum Genus {
+    Neutrum = (1 << 0),
+    Male = (1 << 1),
+    Female = (1 << 2),
+    AllGeni = Neutrum | Male | Female
+};
+
 enum TokenType {
     TokenType_Unknown = 0,
+    Unmeaning,
     SentenceBeginning,
     SentenceEnd,
     Word
