@@ -55,9 +55,52 @@ static inline bool article_search(const std::string& source_term)
     return false;
 }
 
+static inline bool subjunction_search(const std::string& term)
+{
+    static const std::array<std::string, 28> subjunctions = {
+        "als", "bevor", "bis", "da", "damit", "dass", "ehe", "falls", "indem",
+        "nachdem", "ob", "obgleich", "obschon", "obwohl", "seit", "seitdem",
+        "sobald", "sodass", "sofern", "solange", "sooft", "soweit", "soviel",
+        "während", "weil", "wenn", "wie", "wohingegen"
+    };
+    for (const auto& subjunction : subjunctions) {
+        const auto input = transform_lowercase(term);
+        if (strict_search(subjunction, input))
+            return true;
+    }
+    return false;
+}
+
+static inline bool nomen_check(const std::string& word)
+{
+    return word.length() >= 2 && word[0] == std::toupper(word[0]) && word[1] == std::tolower(word[1]);
+}
+
 static inline std::string article_verscheissern(const std::string& article)
 {
     return article + std::string(" scheiß");
+}
+
+static inline std::string strip_punctuation(const std::string& word, TokenAnalysis& followup_token)
+{
+    static const unsigned char question_mark = '?';
+    static const unsigned char exclamation_mark = '!';
+    static const unsigned char period = '.';
+    static const std::array<unsigned char, 6> punctuations = {',', ':', ';', period, question_mark, exclamation_mark };
+    std::string ret;
+
+    for (const auto& c : word) {
+        if (std::find(punctuations.begin(), punctuations.end(), c) != std::end(punctuations)) {
+            if (c == period || c == exclamation_mark || c == question_mark) {
+                const std::string punctuation(1, c);
+                followup_token.word = punctuation;
+                followup_token.token_type = SentenceEnd;
+            }
+            continue;
+        }
+        ret += c;
+    }
+    return ret;
 }
 
 std::vector<TokenAnalysis> analyse(const std::vector<std::string>& input)
@@ -65,13 +108,25 @@ std::vector<TokenAnalysis> analyse(const std::vector<std::string>& input)
     std::vector<TokenAnalysis> ret;
 
     for (auto it = input.cbegin(); it != input.cend(); it++) {
-        const std::string& word = *it;
+        TokenAnalysis followup_token;
+        const std::string word = strip_punctuation(*it, followup_token);
+
         Type type = Type_Unknown;
+        TokenType token_type = TokenType_Unknown;
 
         if (article_search(word))
             type = Artikel;
+        else if (subjunction_search(word))
+            type = Subjunktion;
+        // Check whether its a Nomen later to avoid beginnings of sentences to be misdetected.
+        else if (nomen_check(word))
+            type = Nomen;
 
-        ret.push_back(TokenAnalysis{word, type});
+        ret.push_back(TokenAnalysis{word, token_type, type});
+        if (followup_token.token_type != TokenType_Unknown) {
+            ret.push_back(followup_token);
+            followup_token = TokenAnalysis();
+        }
     }
 
     return ret;

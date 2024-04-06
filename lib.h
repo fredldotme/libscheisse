@@ -39,7 +39,15 @@ enum Type {
     Artikel,
     Pronomen,
     Praeposition,
-    Konjunktion
+    Konjunktion,
+    Subjunktion
+};
+
+enum TokenType {
+    TokenType_Unknown = 0,
+    SentenceBeginning,
+    SentenceEnd,
+    Word
 };
 
 enum ScheissFlags {
@@ -49,8 +57,9 @@ enum ScheissFlags {
 };
 
 struct TokenAnalysis {
-    const std::string word;
-    const Type type;
+    std::string word;
+    TokenType token_type = TokenType_Unknown;
+    Type type = Type_Unknown;
 };
 
 std::vector<TokenAnalysis> analyse(const std::vector<std::string>& input);
