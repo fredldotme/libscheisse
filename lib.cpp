@@ -17,7 +17,7 @@ static inline std::vector<std::string> split_string(const std::string& to_split)
     return ret;
 }
 
-static inline std::string transform_lowercase(const std::string& source)
+static inline std::string to_lowercase(const std::string& source)
 {
     std::string ret;
     for (const auto& c : source) {
@@ -33,15 +33,15 @@ static inline bool strict_search(const std::string& source_term, const std::stri
 
 static inline bool insensitive_search(const std::string& source_term, const std::string& search_term)
 {
-    const std::string source = transform_lowercase(source_term);
-    const std::string test = transform_lowercase(search_term);
+    const std::string source = to_lowercase(source_term);
+    const std::string test = to_lowercase(search_term);
     return source.find(test) == 0 && source.length() == test.length();
 }
 
 static inline bool fuzzy_search(const std::string& source_term, const std::string& search_term)
 {
-    const std::string source = transform_lowercase(source_term);
-    const std::string test = transform_lowercase(search_term);
+    const std::string source = to_lowercase(source_term);
+    const std::string test = to_lowercase(search_term);
     return source.find(test) == std::string::npos && source.length() < test.length();
 }
 
@@ -64,7 +64,7 @@ static inline bool subjunction_search(const std::string& term)
         "während", "weil", "wenn", "wie", "wohingegen"
     };
     for (const auto& subjunction : subjunctions) {
-        const auto input = transform_lowercase(term);
+        const auto input = to_lowercase(term);
         if (strict_search(subjunction, input))
             return true;
     }
