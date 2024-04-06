@@ -3,4 +3,4 @@ TEMPLATE = app
 
 SOURCES += \
     $$PWD/lib.cpp \
-    $$PWD/main.cpp
+    $$PWD/test.cpp
