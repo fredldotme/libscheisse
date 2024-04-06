@@ -1,4 +1,4 @@
-TARGET = libscheisse
+TARGET = scheisse
 TEMPLATE = lib
 
 SOURCES += \
