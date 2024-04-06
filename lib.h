@@ -48,6 +48,14 @@ enum ScheissFlags {
     Default = BeforeArticles
 };
 
+struct TokenAnalysis {
+    const std::string word;
+    const Type type;
+};
+
+std::vector<TokenAnalysis> analyse(const std::vector<std::string>& input);
+std::vector<TokenAnalysis> analyse(const std::string& input);
+
 std::string verscheissern(const std::vector<std::string>& input, const ScheissFlags flags = Default);
 std::string verscheissern(const std::string& input, const ScheissFlags flags = Default);
 

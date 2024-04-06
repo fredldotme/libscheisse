@@ -4,6 +4,7 @@
 #include <array>
 #include <cctype>
 #include <sstream>
+#include <iostream>
 
 static inline std::vector<std::string> split_string(const std::string& to_split)
 {
@@ -19,9 +20,9 @@ static inline std::vector<std::string> split_string(const std::string& to_split)
 static inline std::string transform_lowercase(const std::string& source)
 {
     std::string ret;
-    std::transform(source.cbegin(), source.cend(), ret.begin(), [=](unsigned char c){
-        return static_cast<unsigned char>(std::tolower(c));
-    });
+    for (const auto& c : source) {
+        ret += static_cast<unsigned char>(std::tolower(c));
+    }
     return ret;
 }
 
@@ -48,7 +49,7 @@ static inline bool article_search(const std::string& source_term)
 {
     static const std::array<std::string, 3> articles = {"der", "die", "das"};
     for (const auto& article : articles) {
-        if (strict_search(source_term, article))
+        if (insensitive_search(source_term, article))
            return true;
     }
     return false;
@@ -59,22 +60,45 @@ static inline std::string article_verscheissern(const std::string& article)
     return article + std::string(" scheiß");
 }
 
+std::vector<TokenAnalysis> analyse(const std::vector<std::string>& input)
+{
+    std::vector<TokenAnalysis> ret;
+
+    for (auto it = input.cbegin(); it != input.cend(); it++) {
+        const std::string& word = *it;
+        Type type = Type_Unknown;
+
+        if (article_search(word))
+            type = Artikel;
+
+        ret.push_back(TokenAnalysis{word, type});
+    }
+
+    return ret;
+}
+
+std::vector<TokenAnalysis> analyse(const std::string& input)
+{
+    return analyse(split_string(input));
+}
+
 std::string verscheissern(const std::vector<std::string>& input, const ScheissFlags flags)
 {
     std::string ret;
+    const auto analysis = analyse(input);
 
-    for (auto it = input.begin(); it != input.end(); it++) {
-        const std::string& word = *it;
+    for (auto it = analysis.cbegin(); it != analysis.cend(); it++) {
+        const auto& token = (*it);
         std::string spe;
 
-        if ((flags & ScheissFlags::BeforeArticles) && article_search(word)) {
-            spe = article_verscheissern(word);
+        if ((flags & ScheissFlags::BeforeArticles) && token.type == Artikel) {
+            spe = article_verscheissern(token.word);
         } else {
-            spe = word;
+            spe = token.word;
         }
 
         ret += spe;
-        if (word != *input.cend())
+        if (token.word != *input.cend())
             ret += " ";
     }
 
@@ -85,4 +109,3 @@ std::string verscheissern(const std::string& input, const ScheissFlags flags)
 {
     return verscheissern(split_string(input));
 }
-
