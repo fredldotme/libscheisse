@@ -87,8 +87,12 @@ static inline std::string strip_punctuation(const std::string& word, TokenAnalys
     static const unsigned char exclamation_mark = '!';
     static const unsigned char period = '.';
     static const std::array<unsigned char, 6> punctuations = {',', ':', ';', period, question_mark, exclamation_mark };
-    std::string ret;
 
+    // Optimize short hand writing without stripping periods
+    if (std::count(word.cbegin(), word.cend(), period) > 1)
+        return word;
+
+    std::string ret;
     for (const auto& c : word) {
         if (std::find(punctuations.begin(), punctuations.end(), c) != std::end(punctuations)) {
             if (c == period || c == exclamation_mark || c == question_mark) {
