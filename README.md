@@ -13,9 +13,9 @@ Usecases include:
 
 - Tough times
 - Breakups
+- Loss of a loved one
 - Reduction of medication doses
 - Raise in medication doses
-- Loss of a loved one
 - New neighbors
 - Destroyed furniture due to animal involvement
 - Broken glass or porcelain
