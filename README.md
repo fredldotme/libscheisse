@@ -2,7 +2,12 @@
 
 Because everything just plain sucks.
 
-libscheisse is a single-function C++ library that puts emphasis in sentences using the word "Scheiße".
+libscheisse is a single-purpose C++ library that puts emphasis in sentences using the word "Scheiße".
+
+It provides two functions to interact with the library's functionality:
+
+- `analyse`: Iterates through input and provides an analysis about the German grammar rules
+- `verscheissern`: Sprinkles emphasis on the input based on flags provided as a parameter
 
 Usecases include:
 
