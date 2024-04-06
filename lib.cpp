@@ -2,18 +2,25 @@
 
 #include <algorithm>
 #include <array>
-#include <cctype>
-#include <sstream>
-#include <iostream>
 
 static inline std::vector<std::string> split_string(const std::string& to_split)
 {
-    std::istringstream split_stream(to_split);
     std::vector<std::string> ret;
     std::string tmp;
-    while (std::getline(split_stream, tmp, ' ')) {
-        ret.push_back(tmp);
+
+#define PUSH_IF_POSSIBLE(tmp) \
+    if (!tmp.empty()) { ret.push_back(tmp); tmp = ""; }
+
+    for (const auto& c : to_split) {
+        if (c == ' ') {
+            PUSH_IF_POSSIBLE(tmp)
+            continue;
+        }
+        tmp += c;
     }
+    PUSH_IF_POSSIBLE(tmp)
+
+#undef PUSH_IF_POSSIBLE
     return ret;
 }
 
