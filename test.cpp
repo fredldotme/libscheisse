@@ -4,6 +4,9 @@
 
 int main(int argc, char** argv)
 {
+    time_t current_time;
+    srand((unsigned int)time(&current_time));
+
     const std::string test = "Weil der Dreck nicht geht ist die Scheiße am Dampfen. "
                              "Das ist aber i.d.r egal wenn der Hopfen fehlt.";
 
