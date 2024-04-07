@@ -21,7 +21,12 @@ Usecases include:
 - Broken glass or porcelain
 - Thinking too long about the Heat Death of the Universe
 - Eating nothing for too long
-- Stepping on Lego (tm)
+- Stepping on Lego (TM)
+
+## A note about its purpose
+
+The purpose: Humor. Have you heard about it? It is clearly a piece of work for entertainment (at the moment).
+Don't even dare to sue me because you've sent a message to the wrong person insulting someone or taking life too serious.
 
 ## Copyright
 
