@@ -15,12 +15,11 @@ struct Alternative {
     Case casus;
 };
 
+// TODO: Verteilung der Auswahl alternativer Schreibweisen
 static const std::array<Alternative, 9> alternatives = {
     Alternative{"scheiß", AllGeni, AllCases},
     Alternative{"beschissene", AllGeni, Nominativ},
-    Alternative{"beschissener", Male, Genitiv},
-    Alternative{"beschissene", Female, Genitiv},
-    Alternative{"beschissenes", Neutrum, Genitiv},
+    Alternative{"beschissenen", AllGeni, Genitiv},
     Alternative{"beschissenen", AllGeni, Dativ},
     Alternative{"beschissenen", Male, Akkusativ},
     Alternative{"beschissene", Female, Akkusativ},
@@ -128,7 +127,7 @@ static inline std::vector<Spe>::const_iterator find_duplicate_spes(const std::ve
 
 static inline bool strict_search(const std::string& source_term, const std::string& search_term)
 {
-    return source_term.find(search_term) == 0 && source_term.length() == search_term.length();
+    return source_term == search_term;
 }
 
 static inline bool insensitive_search(const std::string& source_term, const std::string& search_term)
