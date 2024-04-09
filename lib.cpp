@@ -27,6 +27,7 @@ static const std::vector<Alternative> alternatives_known = {
     Alternative{"beschissene", Female, Akkusativ},
     Alternative{"beschissene", Neutrum, Akkusativ}
 };
+
 // Without articles
 static const std::vector<Alternative> alternatives_unknown = {
     Alternative{"scheiß", AllGeni, AllCases},
@@ -43,6 +44,8 @@ static const std::vector<Alternative> alternatives_unknown = {
     Alternative{"beschissene", Female, Akkusativ},
     Alternative{"beschissenes", Neutrum, Akkusativ}
 };
+
+// Always pick this one as a fallback
 static const int default_alternative = 0;
 
 static const unsigned char question_mark = '?';
@@ -95,8 +98,8 @@ static inline std::vector<std::string> split_string(const std::string& to_split)
         tmp += c;
     }
     PUSH_IF_POSSIBLE(tmp)
-
 #undef PUSH_IF_POSSIBLE
+
     return ret;
 }
 
@@ -406,9 +409,9 @@ static inline void build_relations(std::vector<TokenAnalysis>& analysis) {
         // Example: "Des Vodkas reinster Vergleichspunkt ist ->die der Kartoffel nachgesagte Verarbeitung<-."
         if (peek_forward_token && token.type == Artikel && (*peek_forward_token).type == Artikel) {
             // The one the second article pertains to
-            auto first_nomen = find_next_nomen(it, analysis.end());
+            auto first_nomen = find_next_nomen((it + 1), analysis.end());
             // The one this article pertains to
-            auto second_nomen = find_next_nomen(first_nomen, analysis.end());
+            auto second_nomen = find_next_nomen((first_nomen + 1), analysis.end());
 
             // Set up relationship
             (*first_nomen).dictating_token = &(*peek_forward_token);
@@ -417,6 +420,10 @@ static inline void build_relations(std::vector<TokenAnalysis>& analysis) {
             // TODO: Figure out whether a jump-ahead optimization works
             //it = second_nomen;
             //continue;
+        }
+        // Less narrow case: regular article before a nomen
+        else if (peek_forward_token && token.type == Artikel && (*peek_forward_token).type == Nomen) {
+            (*peek_forward_token).dictating_token = &(*it);
         }
     }
 }
