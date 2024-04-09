@@ -16,7 +16,9 @@ struct Alternative {
 };
 
 // TODO: Verteilung der Auswahl alternativer Schreibweisen
-static const std::array<Alternative, 7> alternatives = {
+
+// With articles
+static const std::vector<Alternative> alternatives_known = {
     Alternative{"scheiß", AllGeni, AllCases},
     Alternative{"beschissene", AllGeni, Nominativ},
     Alternative{"beschissenen", AllGeni, Genitiv},
@@ -24,6 +26,22 @@ static const std::array<Alternative, 7> alternatives = {
     Alternative{"beschissenen", Male, Akkusativ},
     Alternative{"beschissene", Female, Akkusativ},
     Alternative{"beschissene", Neutrum, Akkusativ}
+};
+// Without articles
+static const std::vector<Alternative> alternatives_unknown = {
+    Alternative{"scheiß", AllGeni, AllCases},
+    Alternative{"beschissener", Male, Nominativ},
+    Alternative{"beschissene", Female, Nominativ},
+    Alternative{"beschissenes", Neutrum, Nominativ},
+    Alternative{"beschissenen", Male, Genitiv},
+    Alternative{"beschissener", Female, Genitiv},
+    Alternative{"beschissenen", Neutrum, Genitiv},
+    Alternative{"beschissenem", Male, Dativ},
+    Alternative{"beschissener", Female, Dativ},
+    Alternative{"beschissenem", Neutrum, Dativ},
+    Alternative{"beschissenen", Male, Akkusativ},
+    Alternative{"beschissene", Female, Akkusativ},
+    Alternative{"beschissenes", Neutrum, Akkusativ}
 };
 static const int default_alternative = 0;
 
@@ -33,21 +51,28 @@ static const unsigned char period = '.';
 
 static inline bool contains_alternative(const std::string& term, std::string* found_alternative = nullptr)
 {
-    for (const auto& alternative : alternatives) {
-        if (term.find(alternative.word) != std::string::npos) {
-            if (found_alternative)
-                *found_alternative = alternative.word;
-            return true;
-        }
+#define TRY_RETURN_IF_FOUND(arr, term, found_alternative) \
+   for (const auto& alternative : arr) { \
+        if (term.find(alternative.word) != std::string::npos) { \
+            if (found_alternative) \
+                *found_alternative = alternative.word; \
+            return true; \
+        } \
     }
+
+    TRY_RETURN_IF_FOUND(alternatives_known, term, found_alternative);
+    TRY_RETURN_IF_FOUND(alternatives_unknown, term, found_alternative);
+#undef TRY_RETURN_IF_FOUND
+
     return false;
 }
 
-static inline std::string random_scheiss(const Genus genus = AllGeni, const Case casus = AllCases)
+static inline std::string random_scheiss(const TokenAnalysis& token)
 {
+    const auto& alternatives = token.type == Artikel ? alternatives_known : alternatives_unknown;
     for (int index = rand() % alternatives.size(); index < alternatives.size(); index++) {
         const auto& alternative = alternatives[index];
-        if ((alternative.genus & genus) && (alternative.casus & casus))
+        if ((alternative.genus & token.genus) && (alternative.casus & token.casus))
            return alternative.word;
     }
     return alternatives[default_alternative].word;
@@ -314,25 +339,23 @@ static inline bool nomen_check(const std::string& word)
     return word.length() >= 2 && word[0] == std::toupper(word[0]) && word[1] == std::tolower(word[1]);
 }
 
-static inline std::vector<Spe> article_verscheissern(const std::string& article,
-                                                     const Genus genus, const Case casus)
+static inline std::vector<Spe> article_verscheissern(const TokenAnalysis& token)
 {
     std::vector<Spe> ret;
-    ret.push_back({article, true});
-    const auto scheiss = random_scheiss(genus, casus);
+    ret.push_back({token.word, true});
+    const auto scheiss = random_scheiss(token);
     if (!scheiss.empty())
         ret.push_back({scheiss, false});
     return ret;
 }
 
-static inline std::vector<Spe> nomen_verscheissern(const std::string& nomen,
-                                                   const Genus genus, const Case casus)
+static inline std::vector<Spe> nomen_verscheissern(const TokenAnalysis& token)
 {
     std::vector<Spe> ret;
-    const auto scheiss = random_scheiss(genus, casus);
+    const auto scheiss = random_scheiss(token);
     if (!scheiss.empty())
         ret.push_back({scheiss, false});
-    ret.push_back({nomen, true});
+    ret.push_back({token.word, true});
     return ret;
 }
 
@@ -429,11 +452,11 @@ std::string verscheissern(const std::vector<std::string>& input, const ScheissFl
 
         if ((flags & ScheissFlags::BeforeArticles) && token.type == Artikel &&
             peek_forward_token && (*peek_forward_token).type == Nomen) {
-            spes = article_verscheissern(token.word, token.genus, token.casus);
+            spes = article_verscheissern(token);
         } else if ((flags & ScheissFlags::BeforeNomen) && token.type == Nomen &&
                    /*TODO: Remove token_type check once smarter*/
                        token.token_type != SentenceBeginning) {
-            spes = nomen_verscheissern(token.word, token.genus, token.casus);
+            spes = nomen_verscheissern(token);
         } else {
             spes.push_back({token.word, true});
         }
