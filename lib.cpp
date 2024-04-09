@@ -69,7 +69,8 @@ static inline bool contains_alternative(const std::string& term, std::string* fo
 
 static inline std::string random_scheiss(const TokenAnalysis& token)
 {
-    const auto& alternatives = token.type == Artikel ? alternatives_known : alternatives_unknown;
+    const auto& alternatives = (token.type == Artikel || token.dictating_token->type == Artikel) ?
+        alternatives_known : alternatives_unknown;
     for (int index = rand() % alternatives.size(); index < alternatives.size(); index++) {
         const auto& alternative = alternatives[index];
         if ((alternative.genus & token.genus) && (alternative.casus & token.casus))
