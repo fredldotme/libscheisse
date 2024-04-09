@@ -75,7 +75,10 @@ enum ScheissFlags {
 };
 
 struct TokenAnalysis {
+    TokenAnalysis* before_token = nullptr;
+    TokenAnalysis* after_token = nullptr;
     TokenAnalysis* dictating_token = nullptr;
+
     std::string word;
     TokenType token_type = TokenType_Unknown;
     Type type = Type_Unknown;

@@ -61,6 +61,12 @@ static const std::vector<Alternative> alternatives_mixed_flex = {
 // Always pick this one as a fallback
 static const int default_alternative = 0;
 
+// Coin toss moment: Common prefix to avoid over-selecting similar alternatives
+// TODO: Adapt users to an array.size() > 1
+static const std::array<std::string, 1> alternative_prefixes = {
+    "besch" // beschissener, beschissene
+};
+
 static const unsigned char question_mark = '?';
 static const unsigned char exclamation_mark = '!';
 static const unsigned char period = '.';
@@ -97,7 +103,8 @@ static inline bool contains_alternative(const std::string& term, std::string* fo
 {
 #define TRY_RETURN_IF_FOUND(arr, term, found_alternative) \
     for (const auto& alternative : arr) { \
-            if (term.find(alternative.word) != std::string::npos) { \
+            if (term.find(alternative.word) != std::string::npos && \
+                alternative.word.find(alternative_prefixes[0]) == 0) { \
                 if (found_alternative) \
                     *found_alternative = alternative.word; \
                 return true; \
@@ -119,13 +126,15 @@ static inline std::string random_scheiss(const TokenAnalysis& token)
                                    (token.declination_type == MixedFlexion ? alternatives_mixed_flex : alternatives_known) :
                                    alternatives_unknown;
 
-    if (token.genus == Genus_Unknown)
-        return alternatives[default_alternative].word;
-
-    for (int index = rand() % alternatives.size(); index < alternatives.size(); index++) {
+    for (int index = default_alternative + 1; index < alternatives.size(); index++) {
         const auto& alternative = alternatives[index];
-        if ((alternative.genus & token.genus) && (alternative.casus & token.casus))
-            return alternative.word;
+        if ((alternative.genus & token.genus) && (alternative.casus & token.casus)) {
+            // Coin toss whether to use the default, for spreading probabilities
+            if (rand() % 3 == 0)
+                return alternatives[default_alternative].word;
+            else
+                return alternative.word;
+        }
     }
     return alternatives[default_alternative].word;
 }
@@ -425,19 +434,38 @@ static inline bool nomen_check(const std::string& word)
     return word.length() >= 2 && word[0] == std::toupper(word[0]) && word[1] == std::tolower(word[1]);
 }
 
-static inline std::vector<Spe> article_verscheissern(const TokenAnalysis& token)
+static inline std::vector<Spe> article_verscheissern(const TokenAnalysis* before, const TokenAnalysis& token, const TokenAnalysis* after)
 {
     std::vector<Spe> ret;
     ret.push_back({token.word, true});
-    const auto scheiss = random_scheiss(token);
-    if (!scheiss.empty())
-        ret.push_back({scheiss, false});
+
+    // Opinionated workaround: with two articles in a row, prefer to verscheisser with the generic fallback.
+    // Duplicate Spes will be filtered later
+    if ((before && before->type == Artikel) || (after && after->type == Artikel)) {
+        ret.push_back({alternatives_known[default_alternative].word, false});
+    } else {
+        const auto scheiss = random_scheiss(token);
+        if (!scheiss.empty())
+            ret.push_back({scheiss, false});
+    }
     return ret;
 }
 
-static inline std::vector<Spe> nomen_verscheissern(const TokenAnalysis& token)
+static inline std::vector<Spe> nomen_verscheissern(const std::vector<TokenAnalysis>& analysis,
+                                                   const TokenAnalysis* before,
+                                                   const TokenAnalysis& token,
+                                                   const TokenAnalysis* after)
 {
     std::vector<Spe> ret;
+
+    // Optimization & workaround: avoid a double verscheisserung
+    // TODO: Maybe do this without ruling out completely valid grammatical circumstances.
+    if (token.before_token && token.before_token->before_token &&
+        (token.before_token->type == Artikel) && (token.before_token->before_token->type == Artikel)) {
+        ret.push_back({token.word, true});
+        return ret;
+    }
+
     const auto scheiss = random_scheiss(token);
     if (!scheiss.empty())
         ret.push_back({scheiss, false});
@@ -518,6 +546,9 @@ static inline void build_relations(std::vector<TokenAnalysis>& analysis)
         auto* look_backward_token = it != analysis.begin() ? &(*(it-1)) : nullptr;
         auto* peek_forward_token = &(*(it+1));
 
+        token.before_token = look_backward_token;
+        token.after_token = peek_forward_token;
+
         // If the followup token is also an article it's safe to assume
         // the relative word is placed way after.
         // Example: "Des Vodkas reinster Vergleichspunkt ist ->die der Kartoffel nachgesagte Verarbeitung<-."
@@ -595,7 +626,8 @@ std::vector<TokenAnalysis> analyse(const std::vector<std::string>& input)
         }
 
         ret.push_back(
-            TokenAnalysis{dictating_token,
+            TokenAnalysis{nullptr, nullptr,
+                dictating_token,
                 word,
                 token_type,
                 type,
@@ -638,13 +670,12 @@ std::string verscheissern(const std::vector<std::string>& input, const ScheissFl
 
         if (((flags & ScheissFlags::BeforeArticles) && token.type == Artikel) &&
             peek_forward_token && (*peek_forward_token).type == Nomen) {
-            spes = article_verscheissern(token);
+            spes = article_verscheissern(look_backward_token, token, peek_forward_token);
         } else if ((flags & ScheissFlags::BeforeNomen) && token.type == Nomen &&
+                   (look_backward_token && token.dictating_token == look_backward_token) &&
                    /* TODO: Remove token_type check once smarter */
-                   (token.token_type != SentenceBeginning ||
-                    /* TODO: Avoid overwhelming and erroneous irregular Spe insertion */
-                    (look_backward_token && token.dictating_token == look_backward_token))) {
-            spes = nomen_verscheissern(token);
+                   (token.token_type != SentenceBeginning)) {
+            spes = nomen_verscheissern(analysis, look_backward_token, token, peek_forward_token);
         } else {
             spes.push_back({token.word, true});
         }
