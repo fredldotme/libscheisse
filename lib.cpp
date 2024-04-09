@@ -206,7 +206,7 @@ static inline bool article_search(const std::string& term)
 {
 #define TRY_RETURN_SEARCH(arr, term) \
     for (const auto& article : arr) { \
-        if (insensitive_search(term, article)) \
+            if (insensitive_search(term, article)) \
             return true; \
     }
 
@@ -225,9 +225,9 @@ static inline Genus genus_for_article(const std::string& term)
 
 #define TRY_FIND_AND_DECIDE(arr, term, index) \
     index = 0; \
-    for (const auto& article : arr) { \
-        if (insensitive_search(term, article)) \
-            goto decide; \
+        for (const auto& article : arr) { \
+            if (insensitive_search(term, article)) \
+                goto decide; \
     }
 
     TRY_FIND_AND_DECIDE(articles_nominativ_singular_known, term, index);
@@ -250,7 +250,7 @@ decide:
     return Genus_Unknown;
 }
 
-static inline int index_for_genus(const Genus genus)
+static inline int article_index_for_genus(const Genus genus)
 {
     switch (genus) {
     case Male: return 0;
@@ -259,7 +259,7 @@ static inline int index_for_genus(const Genus genus)
     }
 }
 
-static inline Genus genus_for_index(const int index)
+static inline Genus genus_for_article_index(const int index)
 {
     switch (index) {
     case 0: return Male;
@@ -274,10 +274,10 @@ static inline std::vector<Genus> potential_genuses_for_article(const std::string
 
 #define TRY_FIND(arr, term, gens) \
     for (int i = 0; i < 3; i++) { \
-        const auto& article = arr[i]; \
-        if (insensitive_search(term, article)) { \
-            const auto found_genus = genus_for_index(i); \
-            gens.push_back(found_genus); \
+            const auto& article = arr[i]; \
+            if (insensitive_search(term, article)) { \
+                const auto found_genus = genus_for_article_index(i); \
+                gens.push_back(found_genus); \
         } \
     }
 
@@ -322,8 +322,8 @@ static inline DeclinationType declination_type_for_article(const std::string& te
         return Declination_Unknown;
 
 #define TRY_RETURN_TYPE(arr, term, genus, type) \
-    if (arr[index_for_genus(genus)] == term) \
-        return type;
+    if (arr[article_index_for_genus(genus)] == term) \
+            return type;
 
     // With article?
     TRY_RETURN_TYPE(articles_nominativ_singular_known, term, genus, FlexionWithArticle);
@@ -479,6 +479,38 @@ static inline std::vector<TokenAnalysis>::iterator find_next_nomen(std::vector<T
     return end;
 }
 
+static inline Genus find_article_genus_for_casus(const std::string& article, const std::vector<Genus>& genuses, const Case casus)
+{
+    for (const auto& genus : genuses) {
+        switch(casus) {
+        case Nominativ: {
+            const auto found = articles_nominativ_singular_known[article_index_for_genus(genus)];
+            if (insensitive_search(found, article))
+                return genus;
+        }
+        case Genitiv: {
+            const auto found = articles_genitiv_singular_known[article_index_for_genus(genus)];
+            if (insensitive_search(found, article))
+                return genus;
+        }
+        case Dativ: {
+            const auto found = articles_dativ_singular_known[article_index_for_genus(genus)];
+            if (insensitive_search(found, article))
+                return genus;
+        }
+        case Akkusativ: {
+            const auto found = articles_akkusativ_singular_known[article_index_for_genus(genus)];
+            if (insensitive_search(found, article))
+                return genus;
+        }
+        default:
+            break;
+        }
+    }
+
+    return Genus_Unknown;
+}
+
 static inline void build_relations(std::vector<TokenAnalysis>& analysis)
 {
     for (auto it = analysis.begin(); it != analysis.end(); it++) {
@@ -531,9 +563,21 @@ std::vector<TokenAnalysis> analyse(const std::vector<std::string>& input)
 
         if (article_search(word)) {
             type = Artikel;
+            const auto potential_genuses = potential_genuses_for_article(word);
+
+            // TODO: Clear winner? Assign immediately!
+            /*if (potential_genuses.size() == 1) {
+                genus = potential_genuses[0];
+            }*/
             genus = genus_for_article(word);
             casus = casus_for_article(word, genus);
             declination_type = declination_type_for_article(word, genus);
+
+            // Determine by narrowing down with more information available
+            if (potential_genuses.size() > 1) {
+                // TODO: finalize
+                //genus = find_article_genus_for_casus(word, potential_genuses, casus);
+            }
         }
         else if (adverb_search(word)) {
             type = Adverb;
@@ -552,12 +596,12 @@ std::vector<TokenAnalysis> analyse(const std::vector<std::string>& input)
 
         ret.push_back(
             TokenAnalysis{dictating_token,
-                          word,
-                          token_type,
-                          type,
-                          genus,
-                          casus,
-                          declination_type
+                word,
+                token_type,
+                type,
+                genus,
+                casus,
+                declination_type
             });
         if (followup_token.token_type != TokenType_Unknown) {
             ret.push_back(followup_token);
