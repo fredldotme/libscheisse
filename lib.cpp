@@ -442,10 +442,13 @@ std::vector<TokenAnalysis> analyse(const std::vector<std::string>& input)
             type = Artikel;
             genus = genus_for_article(word);
             casus = casus_for_article(word, genus);
-        } else if (adverb_search(word))
+        }
+        else if (adverb_search(word)) {
             type = Adverb;
-        else if (subjunction_search(word))
+        }
+        else if (subjunction_search(word)) {
             type = Subjunktion;
+        }
         // Check whether its a Nomen later to avoid beginnings of sentences to be misdetected.
         else if (nomen_check(word)) {
             type = Nomen;
