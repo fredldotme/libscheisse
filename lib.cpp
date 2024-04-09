@@ -394,7 +394,7 @@ static inline std::vector<TokenAnalysis>::iterator find_next_nomen(std::vector<T
     return end;
 }
 
-static inline void build_relations(std::vector<TokenAnalysis> analysis) {
+static inline void build_relations(std::vector<TokenAnalysis>& analysis) {
 
     for (auto it = analysis.begin(); it != analysis.end(); it++) {
         auto& token = (*it);
