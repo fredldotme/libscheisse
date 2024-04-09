@@ -52,6 +52,13 @@ enum Genus {
     AllGeni = Neutrum | Male | Female
 };
 
+enum DeclinationType {
+    Declination_Unknown = 0,
+    FlexionWithoutArticle = (1 << 0),
+    FlexionWithArticle = (1 << 1),
+    MixedFlexion = (1 << 2)
+};
+
 enum TokenType {
     TokenType_Unknown = 0,
     Unmeaning,
@@ -74,6 +81,7 @@ struct TokenAnalysis {
     Type type = Type_Unknown;
     Genus genus = Genus_Unknown;
     Case casus = Case_Unknown;
+    DeclinationType declination_type = Declination_Unknown;
 };
 
 std::vector<TokenAnalysis> analyse(const std::vector<std::string>& input);

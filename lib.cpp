@@ -45,12 +45,53 @@ static const std::vector<Alternative> alternatives_unknown = {
     Alternative{"beschissenes", Neutrum, Akkusativ}
 };
 
+// Mixed flexion
+static const std::vector<Alternative> alternatives_mixed_flex = {
+    Alternative{"scheiß", AllGeni, AllCases},
+    Alternative{"beschissener", Male, Nominativ},
+    Alternative{"beschissene", Female, Nominativ},
+    Alternative{"beschissenes", Neutrum, Nominativ},
+    Alternative{"beschissenen", AllGeni, Genitiv},
+    Alternative{"beschissenen", AllGeni, Dativ},
+    Alternative{"beschissenen", Male, Akkusativ},
+    Alternative{"beschissene", Female, Akkusativ},
+    Alternative{"beschissenes", Neutrum, Akkusativ}
+};
+
 // Always pick this one as a fallback
 static const int default_alternative = 0;
 
 static const unsigned char question_mark = '?';
 static const unsigned char exclamation_mark = '!';
 static const unsigned char period = '.';
+
+static inline std::string to_lowercase(const std::string& source)
+{
+    std::string ret;
+    for (const auto& c : source) {
+        ret += static_cast<unsigned char>(std::tolower(c));
+    }
+    return ret;
+}
+
+static inline bool strict_search(const std::string& source_term, const std::string& search_term)
+{
+    return source_term == search_term;
+}
+
+static inline bool insensitive_search(const std::string& source_term, const std::string& search_term)
+{
+    const std::string source = to_lowercase(source_term);
+    const std::string test = to_lowercase(search_term);
+    return source.find(test) == 0 && source.length() == test.length();
+}
+
+static inline bool fuzzy_search(const std::string& source_term, const std::string& search_term)
+{
+    const std::string source = to_lowercase(source_term);
+    const std::string test = to_lowercase(search_term);
+    return source.find(test) == std::string::npos && source.length() < test.length();
+}
 
 static inline bool contains_alternative(const std::string& term, std::string* found_alternative = nullptr)
 {
@@ -65,6 +106,7 @@ static inline bool contains_alternative(const std::string& term, std::string* fo
 
     TRY_RETURN_IF_FOUND(alternatives_known, term, found_alternative);
     TRY_RETURN_IF_FOUND(alternatives_unknown, term, found_alternative);
+    TRY_RETURN_IF_FOUND(alternatives_mixed_flex, term, found_alternative);
 #undef TRY_RETURN_IF_FOUND
 
     return false;
@@ -72,7 +114,14 @@ static inline bool contains_alternative(const std::string& term, std::string* fo
 
 static inline std::string random_scheiss(const TokenAnalysis& token)
 {
-    const auto& alternatives = (token.type == Artikel) ? alternatives_known : alternatives_unknown;
+
+    const auto& alternatives = (token.type == Artikel && token.declination_type != Declination_Unknown) ?
+                                   (token.declination_type == MixedFlexion ? alternatives_mixed_flex : alternatives_known) :
+                                   alternatives_unknown;
+
+    if (token.genus == Genus_Unknown)
+        return alternatives[default_alternative].word;
+
     for (int index = rand() % alternatives.size(); index < alternatives.size(); index++) {
         const auto& alternative = alternatives[index];
         if ((alternative.genus & token.genus) && (alternative.casus & token.casus))
@@ -114,15 +163,6 @@ static inline std::string join_string(const std::vector<std::string>& to_join)
     return ret;
 }
 
-static inline std::string to_lowercase(const std::string& source)
-{
-    std::string ret;
-    for (const auto& c : source) {
-        ret += static_cast<unsigned char>(std::tolower(c));
-    }
-    return ret;
-}
-
 static inline std::vector<std::string>::const_iterator find_duplicates(const std::vector<std::string>& clearable,
                                                                        const std::vector<std::string>& reference)
 {
@@ -153,77 +193,52 @@ static inline std::vector<Spe>::const_iterator find_duplicate_spes(const std::ve
     return clearable.cend();
 }
 
-static inline bool strict_search(const std::string& source_term, const std::string& search_term)
-{
-    return source_term == search_term;
-}
-
-static inline bool insensitive_search(const std::string& source_term, const std::string& search_term)
-{
-    const std::string source = to_lowercase(source_term);
-    const std::string test = to_lowercase(search_term);
-    return source.find(test) == 0 && source.length() == test.length();
-}
-
-static inline bool fuzzy_search(const std::string& source_term, const std::string& search_term)
-{
-    const std::string source = to_lowercase(source_term);
-    const std::string test = to_lowercase(search_term);
-    return source.find(test) == std::string::npos && source.length() < test.length();
-}
-
 static const std::array<std::string, 3> articles_nominativ_singular_known = {"der", "die", "das"};
 static const std::array<std::string, 3> articles_genitiv_singular_known = {"des", "der", "des"};
 static const std::array<std::string, 3> articles_dativ_singular_known = {"dem", "der", "dem"};
 static const std::array<std::string, 3> articles_akkusativ_singular_known = {"den", "die", "das"};
+static const std::array<std::string, 3> articles_nominativ_singular_mixedflex = {"ein", "eine", "ein"};
+static const std::array<std::string, 3> articles_genitiv_singular_mixedflex = {"eines", "einer", "eines"};
+static const std::array<std::string, 3> articles_dativ_singular_mixedflex = {"einem", "einer", "einem"};
+static const std::array<std::string, 3> articles_akkusativ_singular_mixedflex = {"einen", "eine", "ein"};
 
 static inline bool article_search(const std::string& term)
 {
-    for (const auto& article : articles_nominativ_singular_known) {
-        if (insensitive_search(term, article))
-            return true;
+#define TRY_RETURN_SEARCH(arr, term) \
+    for (const auto& article : arr) { \
+        if (insensitive_search(term, article)) \
+            return true; \
     }
-    for (const auto& article : articles_genitiv_singular_known) {
-        if (insensitive_search(term, article))
-            return true;
-    }
-    for (const auto& article : articles_dativ_singular_known) {
-        if (insensitive_search(term, article))
-            return true;
-    }
-    for (const auto& article : articles_akkusativ_singular_known) {
-        if (insensitive_search(term, article))
-            return true;
-    }
+
+    TRY_RETURN_SEARCH(articles_nominativ_singular_known, term);
+    TRY_RETURN_SEARCH(articles_genitiv_singular_known, term);
+    TRY_RETURN_SEARCH(articles_dativ_singular_known, term);
+    TRY_RETURN_SEARCH(articles_akkusativ_singular_known, term);
+#undef TRY_RETURN_SEARCH
+
     return false;
 }
 
 static inline Genus genus_for_article(const std::string& term)
 {
-    int index = 0;
+    int index;
 
-    for (const auto& article : articles_nominativ_singular_known) {
-        if (insensitive_search(term, article))
-            goto decide;
+#define TRY_FIND_AND_DECIDE(arr, term, index) \
+    index = 0; \
+    for (const auto& article : arr) { \
+        if (insensitive_search(term, article)) \
+            goto decide; \
     }
 
-    index = 0;
-    for (const auto& article : articles_genitiv_singular_known) {
-        if (insensitive_search(term, article))
-            goto decide;
-    }
-
-    index = 0;
-    for (const auto& article : articles_dativ_singular_known) {
-        if (insensitive_search(term, article))
-            goto decide;
-    }
-
-    index = 0;
-    for (const auto& article : articles_akkusativ_singular_known) {
-        if (insensitive_search(term, article))
-            goto decide;
-    }
+    TRY_FIND_AND_DECIDE(articles_nominativ_singular_known, term, index);
+    TRY_FIND_AND_DECIDE(articles_genitiv_singular_known, term, index);
+    TRY_FIND_AND_DECIDE(articles_dativ_singular_known, term, index);
+    TRY_FIND_AND_DECIDE(articles_akkusativ_singular_known, term, index);
+    TRY_FIND_AND_DECIDE(articles_nominativ_singular_mixedflex, term, index);
+    TRY_FIND_AND_DECIDE(articles_genitiv_singular_mixedflex, term, index);
+    TRY_FIND_AND_DECIDE(articles_dativ_singular_mixedflex, term, index);
+    TRY_FIND_AND_DECIDE(articles_akkusativ_singular_mixedflex, term, index);
+#undef TRY_FIND_AND_DECIDE
 
 decide:
     if (index == 0)
@@ -233,6 +248,50 @@ decide:
     else if (index == 2)
         return Neutrum;
     return Genus_Unknown;
+}
+
+static inline int index_for_genus(const Genus genus)
+{
+    switch (genus) {
+    case Male: return 0;
+    case Female: return 1;
+    default: return 2;
+    }
+}
+
+static inline Genus genus_for_index(const int index)
+{
+    switch (index) {
+    case 0: return Male;
+    case 1: return Female;
+    default: return Neutrum;
+    }
+}
+
+static inline std::vector<Genus> potential_genuses_for_article(const std::string& term)
+{
+    std::vector<Genus> genuses;
+
+#define TRY_FIND(arr, term, gens) \
+    for (int i = 0; i < 3; i++) { \
+        const auto& article = arr[i]; \
+        if (insensitive_search(term, article)) { \
+            const auto found_genus = genus_for_index(i); \
+            gens.push_back(found_genus); \
+        } \
+    }
+
+    TRY_FIND(articles_nominativ_singular_known, term, genuses);
+    TRY_FIND(articles_genitiv_singular_known, term, genuses);
+    TRY_FIND(articles_dativ_singular_known, term, genuses);
+    TRY_FIND(articles_akkusativ_singular_known, term, genuses);
+    TRY_FIND(articles_nominativ_singular_mixedflex, term, genuses);
+    TRY_FIND(articles_genitiv_singular_mixedflex, term, genuses);
+    TRY_FIND(articles_dativ_singular_mixedflex, term, genuses);
+    TRY_FIND(articles_akkusativ_singular_mixedflex, term, genuses);
+#undef TRY_FIND
+
+    return genuses;
 }
 
 static inline Case casus_for_article(const std::string& article, const Genus genus)
@@ -255,6 +314,31 @@ static inline Case casus_for_article(const std::string& article, const Genus gen
         return Akkusativ;
 
     return Case_Unknown;
+}
+
+static inline DeclinationType declination_type_for_article(const std::string& term, const Genus genus)
+{
+    if (!article_search(term) || genus == Genus_Unknown)
+        return Declination_Unknown;
+
+#define TRY_RETURN_TYPE(arr, term, genus, type) \
+    if (arr[index_for_genus(genus)] == term) \
+        return type;
+
+    // With article?
+    TRY_RETURN_TYPE(articles_nominativ_singular_known, term, genus, FlexionWithArticle);
+    TRY_RETURN_TYPE(articles_genitiv_singular_known, term, genus, FlexionWithArticle);
+    TRY_RETURN_TYPE(articles_dativ_singular_known, term, genus, FlexionWithArticle);
+    TRY_RETURN_TYPE(articles_akkusativ_singular_known, term, genus, FlexionWithArticle);
+
+    // Mixed flexion?
+    TRY_RETURN_TYPE(articles_nominativ_singular_mixedflex, term, genus, MixedFlexion);
+    TRY_RETURN_TYPE(articles_genitiv_singular_mixedflex, term, genus, MixedFlexion);
+    TRY_RETURN_TYPE(articles_dativ_singular_mixedflex, term, genus, MixedFlexion);
+    TRY_RETURN_TYPE(articles_akkusativ_singular_mixedflex, term, genus, MixedFlexion);
+#undef TRY_RETURN_TYPE
+
+    return FlexionWithoutArticle;
 }
 
 static inline Case preposition_search(const std::string& term)
@@ -439,6 +523,7 @@ std::vector<TokenAnalysis> analyse(const std::vector<std::string>& input)
         Type type = Type_Unknown;
         Genus genus = Genus_Unknown;
         Case casus = Case_Unknown;
+        DeclinationType declination_type = Declination_Unknown;
         TokenAnalysis* dictating_token = nullptr;
         TokenType token_type = (it == input.cbegin()) ? SentenceBeginning : TokenType_Unknown;
         if (previous_token  && (*previous_token).token_type == SentenceEnd)
@@ -448,6 +533,7 @@ std::vector<TokenAnalysis> analyse(const std::vector<std::string>& input)
             type = Artikel;
             genus = genus_for_article(word);
             casus = casus_for_article(word, genus);
+            declination_type = declination_type_for_article(word, genus);
         }
         else if (adverb_search(word)) {
             type = Adverb;
@@ -464,7 +550,15 @@ std::vector<TokenAnalysis> analyse(const std::vector<std::string>& input)
             }
         }
 
-        ret.push_back(TokenAnalysis{dictating_token, word, token_type, type, genus, casus});
+        ret.push_back(
+            TokenAnalysis{dictating_token,
+                          word,
+                          token_type,
+                          type,
+                          genus,
+                          casus,
+                          declination_type
+            });
         if (followup_token.token_type != TokenType_Unknown) {
             ret.push_back(followup_token);
             followup_token = TokenAnalysis();
@@ -502,8 +596,10 @@ std::string verscheissern(const std::vector<std::string>& input, const ScheissFl
             peek_forward_token && (*peek_forward_token).type == Nomen) {
             spes = article_verscheissern(token);
         } else if ((flags & ScheissFlags::BeforeNomen) && token.type == Nomen &&
-                   /*TODO: Remove token_type check once smarter*/
-                       token.token_type != SentenceBeginning) {
+                   /* TODO: Remove token_type check once smarter */
+                   (token.token_type != SentenceBeginning ||
+                    /* TODO: Avoid overwhelming and erroneous irregular Spe insertion */
+                    (look_backward_token && token.dictating_token == look_backward_token))) {
             spes = nomen_verscheissern(token);
         } else {
             spes.push_back({token.word, true});
