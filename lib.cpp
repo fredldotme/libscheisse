@@ -16,7 +16,7 @@ struct Alternative {
 };
 
 // TODO: Verteilung der Auswahl alternativer Schreibweisen
-static const std::array<Alternative, 9> alternatives = {
+static const std::array<Alternative, 7> alternatives = {
     Alternative{"scheiß", AllGeni, AllCases},
     Alternative{"beschissene", AllGeni, Nominativ},
     Alternative{"beschissenen", AllGeni, Genitiv},
