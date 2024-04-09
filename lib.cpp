@@ -72,8 +72,7 @@ static inline bool contains_alternative(const std::string& term, std::string* fo
 
 static inline std::string random_scheiss(const TokenAnalysis& token)
 {
-    const auto& alternatives = (token.type == Artikel || token.dictating_token->type == Artikel) ?
-        alternatives_known : alternatives_unknown;
+    const auto& alternatives = (token.type == Artikel) ? alternatives_known : alternatives_unknown;
     for (int index = rand() % alternatives.size(); index < alternatives.size(); index++) {
         const auto& alternative = alternatives[index];
         if ((alternative.genus & token.genus) && (alternative.casus & token.casus))
@@ -258,7 +257,6 @@ static inline Case casus_for_article(const std::string& article, const Genus gen
     return Case_Unknown;
 }
 
-
 static inline Case preposition_search(const std::string& term)
 {
     static const std::array<std::string, 6> akkusative_prepositions = {
@@ -397,8 +395,8 @@ static inline std::vector<TokenAnalysis>::iterator find_next_nomen(std::vector<T
     return end;
 }
 
-static inline void build_relations(std::vector<TokenAnalysis>& analysis) {
-
+static inline void build_relations(std::vector<TokenAnalysis>& analysis)
+{
     for (auto it = analysis.begin(); it != analysis.end(); it++) {
         auto& token = (*it);
         auto* look_backward_token = it != analysis.begin() ? &(*(it-1)) : nullptr;
