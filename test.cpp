@@ -21,6 +21,8 @@ int main(int argc, char** argv)
         std::cout << "\tWord: " << token_analysis.word << std::endl;
         std::cout << "\tToken type: " << token_analysis.token_type << std::endl;
         std::cout << "\tType: " << token_analysis.type << std::endl;
+        std::cout << "\tCase: " << token_analysis.casus << std::endl;
+        std::cout << "\tGenus: " << token_analysis.genus << std::endl;
         std::cout << std::endl;
     }
 
