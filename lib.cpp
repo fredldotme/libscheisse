@@ -52,11 +52,11 @@ static const unsigned char period = '.';
 static inline bool contains_alternative(const std::string& term, std::string* found_alternative = nullptr)
 {
 #define TRY_RETURN_IF_FOUND(arr, term, found_alternative) \
-   for (const auto& alternative : arr) { \
-        if (term.find(alternative.word) != std::string::npos) { \
-            if (found_alternative) \
-                *found_alternative = alternative.word; \
-            return true; \
+    for (const auto& alternative : arr) { \
+            if (term.find(alternative.word) != std::string::npos) { \
+                if (found_alternative) \
+                    *found_alternative = alternative.word; \
+                return true; \
         } \
     }
 
@@ -73,7 +73,7 @@ static inline std::string random_scheiss(const TokenAnalysis& token)
     for (int index = rand() % alternatives.size(); index < alternatives.size(); index++) {
         const auto& alternative = alternatives[index];
         if ((alternative.genus & token.genus) && (alternative.casus & token.casus))
-           return alternative.word;
+            return alternative.word;
     }
     return alternatives[default_alternative].word;
 }
@@ -383,6 +383,43 @@ static inline std::string strip_punctuation(const std::string& word, TokenAnalys
     return ret;
 }
 
+static inline std::vector<TokenAnalysis>::iterator find_next_nomen(std::vector<TokenAnalysis>::iterator begin,
+                                                                   std::vector<TokenAnalysis>::iterator end)
+{
+    for (auto it = begin; it != end; it++) {
+        if (article_search((*it).word))
+            return it;
+    }
+    return end;
+}
+
+static inline void build_relations(std::vector<TokenAnalysis> analysis) {
+
+    for (auto it = analysis.begin(); it != analysis.end(); it++) {
+        auto& token = (*it);
+        auto* look_backward_token = it != analysis.begin() ? &(*(it-1)) : nullptr;
+        auto* peek_forward_token = &(*(it+1));
+
+        // If the followup token is also an article it's safe to assume
+        // the relative word is placed way after.
+        // Example: "Des Vodkas reinster Vergleichspunkt ist ->die der Kartoffel nachgesagte Verarbeitung<-."
+        if (peek_forward_token && token.type == Artikel && (*peek_forward_token).type == Artikel) {
+            // The one the second article pertains to
+            auto first_nomen = find_next_nomen(it, analysis.end());
+            // The one this article pertains to
+            auto second_nomen = find_next_nomen(first_nomen, analysis.end());
+
+            // Set up relationship
+            (*first_nomen).dictating_token = &(*peek_forward_token);
+            (*second_nomen).dictating_token = &(*it);
+
+            // TODO: Figure out whether a jump-ahead optimization works
+            //it = second_nomen;
+            //continue;
+        }
+    }
+}
+
 std::vector<TokenAnalysis> analyse(const std::vector<std::string>& input)
 {
     std::vector<TokenAnalysis> ret;
@@ -396,6 +433,7 @@ std::vector<TokenAnalysis> analyse(const std::vector<std::string>& input)
         Type type = Type_Unknown;
         Genus genus = Genus_Unknown;
         Case casus = Case_Unknown;
+        TokenAnalysis* dictating_token = nullptr;
         TokenType token_type = (it == input.cbegin()) ? SentenceBeginning : TokenType_Unknown;
         if (previous_token  && (*previous_token).token_type == SentenceEnd)
             token_type = SentenceBeginning;
@@ -411,19 +449,20 @@ std::vector<TokenAnalysis> analyse(const std::vector<std::string>& input)
         // Check whether its a Nomen later to avoid beginnings of sentences to be misdetected.
         else if (nomen_check(word)) {
             type = Nomen;
-            if (previous_token && article_search((*previous_token).word))
+            if (previous_token && article_search((*previous_token).word)) {
                 genus = (*previous_token).genus;
-            if (previous_token && article_search((*previous_token).word))
                 casus = (*previous_token).casus;
+            }
         }
 
-        ret.push_back(TokenAnalysis{word, token_type, type, genus, casus});
+        ret.push_back(TokenAnalysis{dictating_token, word, token_type, type, genus, casus});
         if (followup_token.token_type != TokenType_Unknown) {
             ret.push_back(followup_token);
             followup_token = TokenAnalysis();
         }
     }
 
+    build_relations(ret);
     return ret;
 }
 
@@ -450,7 +489,7 @@ std::string verscheissern(const std::vector<std::string>& input, const ScheissFl
         // Like "In Spe"
         std::vector<Spe> spes;
 
-        if ((flags & ScheissFlags::BeforeArticles) && token.type == Artikel &&
+        if (((flags & ScheissFlags::BeforeArticles) && token.type == Artikel) &&
             peek_forward_token && (*peek_forward_token).type == Nomen) {
             spes = article_verscheissern(token);
         } else if ((flags & ScheissFlags::BeforeNomen) && token.type == Nomen &&
