@@ -387,7 +387,7 @@ static inline std::vector<TokenAnalysis>::iterator find_next_nomen(std::vector<T
                                                                    std::vector<TokenAnalysis>::iterator end)
 {
     for (auto it = begin; it != end; it++) {
-        if (article_search((*it).word))
+        if (nomen_check((*it).word))
             return it;
     }
     return end;
