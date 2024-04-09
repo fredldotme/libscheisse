@@ -12,20 +12,27 @@ struct Spe {
 struct Alternative {
     std::string word;
     Genus genus;
-    Case kasus;
+    Case casus;
 };
 
-static const std::array<Alternative, 3> alternatives = {
-    Alternative{"", AllGeni, Case_Unknown},
-    Alternative{"scheiß", AllGeni, Case_Unknown},
-    Alternative{"beschissene", AllGeni, Case_Unknown}
+static const std::array<Alternative, 9> alternatives = {
+    Alternative{"scheiß", AllGeni, AllCases},
+    Alternative{"beschissene", AllGeni, Nominativ},
+    Alternative{"beschissener", Male, Genitiv},
+    Alternative{"beschissene", Female, Genitiv},
+    Alternative{"beschissenes", Neutrum, Genitiv},
+    Alternative{"beschissenen", AllGeni, Dativ},
+    Alternative{"beschissenen", Male, Akkusativ},
+    Alternative{"beschissene", Female, Akkusativ},
+    Alternative{"beschissene", Neutrum, Akkusativ}
 };
+static const int default_alternative = 0;
 
 static const unsigned char question_mark = '?';
 static const unsigned char exclamation_mark = '!';
 static const unsigned char period = '.';
 
-static inline bool contains_alternative(const std::string& term, std::string* found_alternative)
+static inline bool contains_alternative(const std::string& term, std::string* found_alternative = nullptr)
 {
     for (const auto& alternative : alternatives) {
         if (term.find(alternative.word) != std::string::npos) {
@@ -37,14 +44,14 @@ static inline bool contains_alternative(const std::string& term, std::string* fo
     return false;
 }
 
-static inline bool contains_alternative(const std::string& term)
+static inline std::string random_scheiss(const Genus genus = AllGeni, const Case casus = AllCases)
 {
-    return contains_alternative(term, nullptr);
-}
-
-static inline std::string random_scheiss()
-{
-    return alternatives[rand() % alternatives.size()].word;
+    for (int index = rand() % alternatives.size(); index < alternatives.size(); index++) {
+        const auto& alternative = alternatives[index];
+        if ((alternative.genus & genus) && (alternative.casus & casus))
+           return alternative.word;
+    }
+    return alternatives[default_alternative].word;
 }
 
 static inline std::vector<std::string> split_string(const std::string& to_split)
@@ -138,14 +145,110 @@ static inline bool fuzzy_search(const std::string& source_term, const std::strin
     return source.find(test) == std::string::npos && source.length() < test.length();
 }
 
+static const std::array<std::string, 3> articles_nominativ_singular_known = {"der", "die", "das"};
+static const std::array<std::string, 3> articles_genitiv_singular_known = {"des", "der", "des"};
+static const std::array<std::string, 3> articles_dativ_singular_known = {"dem", "der", "dem"};
+static const std::array<std::string, 3> articles_akkusativ_singular_known = {"den", "die", "das"};
+
 static inline bool article_search(const std::string& term)
 {
-    static const std::array<std::string, 3> articles = {"der", "die", "das"};
-    for (const auto& article : articles) {
+    for (const auto& article : articles_nominativ_singular_known) {
+        if (insensitive_search(term, article))
+            return true;
+    }
+    for (const auto& article : articles_genitiv_singular_known) {
+        if (insensitive_search(term, article))
+            return true;
+    }
+    for (const auto& article : articles_dativ_singular_known) {
+        if (insensitive_search(term, article))
+            return true;
+    }
+    for (const auto& article : articles_akkusativ_singular_known) {
         if (insensitive_search(term, article))
             return true;
     }
     return false;
+}
+
+static inline Genus genus_for_article(const std::string& term)
+{
+    int index = 0;
+
+    for (const auto& article : articles_nominativ_singular_known) {
+        if (insensitive_search(term, article))
+            goto decide;
+    }
+
+    index = 0;
+    for (const auto& article : articles_genitiv_singular_known) {
+        if (insensitive_search(term, article))
+            goto decide;
+    }
+
+    index = 0;
+    for (const auto& article : articles_dativ_singular_known) {
+        if (insensitive_search(term, article))
+            goto decide;
+    }
+
+    index = 0;
+    for (const auto& article : articles_akkusativ_singular_known) {
+        if (insensitive_search(term, article))
+            goto decide;
+    }
+
+decide:
+    if (index == 0)
+        return Male;
+    else if (index == 1)
+        return Female;
+    else if (index == 2)
+        return Neutrum;
+    return Genus_Unknown;
+}
+
+static inline Case casus_for_article(const std::string& article, const Genus genus)
+{
+    if ((article == articles_nominativ_singular_known[0] && (genus & Male)) ||
+        (article == articles_nominativ_singular_known[1] && (genus & Female)) ||
+        (article == articles_nominativ_singular_known[2] && (genus & Neutrum)))
+        return Nominativ;
+    else if ((article == articles_genitiv_singular_known[0] && (genus & Male)) ||
+             (article == articles_genitiv_singular_known[1] && (genus & Female)) ||
+             (article == articles_genitiv_singular_known[2] && (genus & Neutrum)))
+        return Genitiv;
+    else if ((article == articles_dativ_singular_known[0] && (genus & Male)) ||
+             (article == articles_dativ_singular_known[1] && (genus & Female)) ||
+             (article == articles_dativ_singular_known[2] && (genus & Neutrum)))
+        return Dativ;       
+    else if ((article == articles_akkusativ_singular_known[0] && (genus & Male)) ||
+             (article == articles_akkusativ_singular_known[1] && (genus & Female)) ||
+             (article == articles_akkusativ_singular_known[2] && (genus & Neutrum)))
+        return Akkusativ;
+
+    return Case_Unknown;
+}
+
+
+static inline Case preposition_search(const std::string& term)
+{
+    static const std::array<std::string, 6> akkusative_prepositions = {
+        "bis", "durch", "für", "gegen", "ohne", "um"
+    };
+    static const std::array<std::string, 16> dative_prepositions = {
+        "ab", "aus", "außer", "bei", "gegenüber", "mit", "nach", "nächst",
+        "nebst", "seit", "von", "zu", "zufolge", "zuliebe", "zunächst", "zuwide"
+    };
+    for (const auto& preposition : akkusative_prepositions) {
+        if (insensitive_search(term, preposition))
+            return Akkusativ;
+    }
+    for (const auto& preposition : dative_prepositions) {
+        if (insensitive_search(term, preposition))
+            return Dativ;
+    }
+    return Case_Unknown;
 }
 
 static inline bool adverb_search(const std::string& term) {
@@ -212,20 +315,22 @@ static inline bool nomen_check(const std::string& word)
     return word.length() >= 2 && word[0] == std::toupper(word[0]) && word[1] == std::tolower(word[1]);
 }
 
-static inline std::vector<Spe> article_verscheissern(const std::string& article)
+static inline std::vector<Spe> article_verscheissern(const std::string& article,
+                                                     const Genus genus, const Case casus)
 {
     std::vector<Spe> ret;
     ret.push_back({article, true});
-    const auto scheiss = random_scheiss();
+    const auto scheiss = random_scheiss(genus, casus);
     if (!scheiss.empty())
         ret.push_back({scheiss, false});
     return ret;
 }
 
-static inline std::vector<Spe> nomen_verscheissern(const std::string& nomen)
+static inline std::vector<Spe> nomen_verscheissern(const std::string& nomen,
+                                                   const Genus genus, const Case casus)
 {
     std::vector<Spe> ret;
-    const auto scheiss = random_scheiss();
+    const auto scheiss = random_scheiss(genus, casus);
     if (!scheiss.empty())
         ret.push_back({scheiss, false});
     ret.push_back({nomen, true});
@@ -267,21 +372,30 @@ std::vector<TokenAnalysis> analyse(const std::vector<std::string>& input)
         const std::string word = strip_punctuation(*it, followup_token);
 
         Type type = Type_Unknown;
+        Genus genus = Genus_Unknown;
+        Case casus = Case_Unknown;
         TokenType token_type = (it == input.cbegin()) ? SentenceBeginning : TokenType_Unknown;
         if (previous_token  && (*previous_token).token_type == SentenceEnd)
             token_type = SentenceBeginning;
 
-        if (article_search(word))
+        if (article_search(word)) {
             type = Artikel;
-        else if (adverb_search(word))
+            genus = genus_for_article(word);
+            casus = casus_for_article(word, genus);
+        } else if (adverb_search(word))
             type = Adverb;
         else if (subjunction_search(word))
             type = Subjunktion;
         // Check whether its a Nomen later to avoid beginnings of sentences to be misdetected.
-        else if (nomen_check(word))
+        else if (nomen_check(word)) {
             type = Nomen;
+            if (previous_token && article_search((*previous_token).word))
+                genus = (*previous_token).genus;
+            if (previous_token && article_search((*previous_token).word))
+                casus = (*previous_token).casus;
+        }
 
-        ret.push_back(TokenAnalysis{word, token_type, type});
+        ret.push_back(TokenAnalysis{word, token_type, type, genus, casus});
         if (followup_token.token_type != TokenType_Unknown) {
             ret.push_back(followup_token);
             followup_token = TokenAnalysis();
@@ -316,11 +430,11 @@ std::string verscheissern(const std::vector<std::string>& input, const ScheissFl
 
         if ((flags & ScheissFlags::BeforeArticles) && token.type == Artikel &&
             peek_forward_token && (*peek_forward_token).type == Nomen) {
-            spes = article_verscheissern(token.word);
+            spes = article_verscheissern(token.word, token.genus, token.casus);
         } else if ((flags & ScheissFlags::BeforeNomen) && token.type == Nomen &&
                    /*TODO: Remove token_type check once smarter*/
                        token.token_type != SentenceBeginning) {
-            spes = nomen_verscheissern(token.word);
+            spes = nomen_verscheissern(token.word, token.genus, token.casus);
         } else {
             spes.push_back({token.word, true});
         }

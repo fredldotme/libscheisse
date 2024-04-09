@@ -24,10 +24,11 @@ enum Mode {
 
 enum Case {
     Case_Unknown = 0,
-    Nominativ,
-    Genitiv,
-    Dativ,
-    Akkusativ
+    Nominativ = (1 << 0),
+    Genitiv = (1 << 1),
+    Dativ = (1 << 2),
+    Akkusativ = (1 << 3),
+    AllCases = Nominativ | Genitiv | Dativ | Akkusativ
 };
 
 enum Type {
@@ -44,6 +45,7 @@ enum Type {
 };
 
 enum Genus {
+    Genus_Unknown = 0,
     Neutrum = (1 << 0),
     Male = (1 << 1),
     Female = (1 << 2),
@@ -69,6 +71,8 @@ struct TokenAnalysis {
     std::string word;
     TokenType token_type = TokenType_Unknown;
     Type type = Type_Unknown;
+    Genus genus = Genus_Unknown;
+    Case casus = Case_Unknown;
 };
 
 std::vector<TokenAnalysis> analyse(const std::vector<std::string>& input);
