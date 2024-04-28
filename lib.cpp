@@ -194,7 +194,9 @@ static inline std::vector<Spe>::const_iterator find_duplicate_spes(const std::ve
         const auto& first_needle = *fit;
         for (auto sit = reference.cbegin(); sit != reference.cend(); sit++) {
             const auto& second_needle = *sit;
-            if (!first_needle.regular && first_needle.word == second_needle.word) {
+            if (!first_needle.regular &&
+                ((first_needle.word == second_needle.word) ||
+                 (!second_needle.regular))) {
                 return fit;
             }
         }
@@ -458,7 +460,7 @@ static inline std::vector<Spe> nomen_verscheissern(const std::vector<TokenAnalys
 {
     std::vector<Spe> ret;
 
-    // Optimization & workaround: avoid a double verscheisserung
+    // Optimizations & workarounds: avoid a double verscheisserung
     // TODO: Maybe do this without ruling out completely valid grammatical circumstances.
     if (token.before_token && token.before_token->before_token &&
         (token.before_token->type == Artikel) && (token.before_token->before_token->type == Artikel)) {
