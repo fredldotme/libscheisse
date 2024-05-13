@@ -7,8 +7,8 @@ int main(int argc, char** argv)
     time_t current_time;
     srand((unsigned int)time(&current_time));
 
-    const std::string test = "Weil der des Thorstens angehörende Dreck nicht geht ist die Scheiße am Dampfen. "
-                             "Das ist aber i.d.r egal wenn der Hopfen fehlt. "
+    const std::string test = "Weil der durch Thorsten verursachte Dreck nicht geht ist die Scheiße am Dampfen. "
+                             "Das ist aber i.d.r egal wenn der Hopfen fehlt oder die Anne da ist. "
                              "Des Vodkas reinster Vergleichspunkt ist die der Kartoffel nachgesagte Verarbeitung.";
 
     std::cout << "Eingabe:" << std::endl;

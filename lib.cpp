@@ -130,7 +130,7 @@ static inline std::string random_scheiss(const TokenAnalysis& token)
         const auto& alternative = alternatives[index];
         if ((alternative.genus & token.genus) && (alternative.casus & token.casus)) {
             // Coin toss whether to use the default, for spreading probabilities
-            if (rand() % 3 == 0)
+            if (rand() % 10 == 0)
                 return alternatives[default_alternative].word;
             else
                 return alternative.word;
