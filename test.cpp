@@ -10,7 +10,8 @@ int main(int argc, char** argv)
     const std::string test = "Weil der durch den Thorsten verursachte Dreck nicht geht ist die Scheiße am Dampfen. "
                              "Das ist aber i.d.r egal wenn der Hopfen fehlt. "
                              "Des Vodkas reinster Vergleichspunkt ist die der Kartoffel nachgesagte Verarbeitung. "
-                             "Und die dem Anton gehörende Trompete macht einen unguten Eindruck.";
+                             "Und die dem Anton gehörende Trompete macht einen unguten Eindruck. "
+                             "Das traurige Entchen macht einen Bogen um das Thema.";
 
     std::cout << "Eingabe:" << std::endl;
     std::cout << test << std::endl;

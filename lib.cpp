@@ -3,6 +3,10 @@
 #include <algorithm>
 #include <array>
 
+#ifndef INDEVELOPMENT
+#define INDEVELOPMENT 0
+#endif
+
 // As in "In Spe", determines potentially resulting word
 struct Spe {
     std::string word;
@@ -431,9 +435,22 @@ static inline bool subjunction_search(const std::string& term)
     return false;
 }
 
+#if INDEVELOPMENT
+static inline bool verb_search(const std::string& term)
+{
+
+}
+#endif
+
 static inline bool nomen_check(const std::string& word)
 {
     return word.length() >= 2 && word[0] == std::toupper(word[0]) && word[1] == std::tolower(word[1]);
+}
+
+static inline bool adjective_check(const TokenAnalysis* before, const std::string& word)
+{
+    return word.length() > 1 && std::tolower(word[0]) == word[0] &&
+            (!before || (before && before->type == Artikel));
 }
 
 static inline std::vector<Spe> article_verscheissern(const TokenAnalysis* before, const TokenAnalysis& token, const TokenAnalysis* after)
@@ -473,6 +490,22 @@ static inline std::vector<Spe> nomen_verscheissern(const std::vector<TokenAnalys
         ret.push_back({scheiss, false});
     ret.push_back({token.word, true});
     return ret;
+}
+
+static inline std::vector<Spe> adjective_verscheissern(const std::vector<TokenAnalysis>& analysis,
+                                                       const TokenAnalysis& token)
+{
+    if (token.before_token && token.before_token->token_type == SentenceBeginning &&
+        token.before_token->type == Artikel &&
+        token.after_token && token.after_token->type == Nomen) {
+        return {
+            {
+                "scheiss-" + token.word,
+                false
+            }
+        };
+   }
+   return { { token.word, false} };
 }
 
 static inline std::string strip_punctuation(const std::string& word, TokenAnalysis& followup_token)
@@ -612,6 +645,11 @@ std::vector<TokenAnalysis> analyse(const std::vector<std::string>& input)
                 //genus = find_article_genus_for_casus(word, potential_genuses, casus);
             }
         }
+#if INDEVELOPMENT
+        else if (verb_search(word)) {
+            type = Verb;
+        }
+#endif
         else if (adverb_search(word)) {
             type = Adverb;
         }
@@ -625,6 +663,9 @@ std::vector<TokenAnalysis> analyse(const std::vector<std::string>& input)
                 genus = (*previous_token).genus;
                 casus = (*previous_token).casus;
             }
+        }
+        else if (adjective_check(previous_token, word)) {
+            type = Adjektiv;
         }
 
         ret.push_back(
@@ -678,6 +719,10 @@ std::string verscheissern(const std::vector<std::string>& input, const ScheissFl
                    /* TODO: Remove token_type check once smarter */
                    (token.token_type != SentenceBeginning)) {
             spes = nomen_verscheissern(analysis, look_backward_token, token, peek_forward_token);
+        } else if ((flags & ScheissFlags::BeforeAdjectives) && token.type == Adjektiv &&
+                   /* TODO: Remove token_type check once smarter */
+                   (token.token_type != SentenceBeginning)) {
+            spes = adjective_verscheissern(analysis, token);
         } else {
             spes.push_back({token.word, true});
         }
