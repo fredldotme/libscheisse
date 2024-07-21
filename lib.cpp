@@ -738,8 +738,7 @@ std::string verscheissern(const std::vector<std::string>& input, const ScheissFl
 
         if (replacement_search(token.word)) {
             spes.push_back(replace_token(token.word));
-        }
-        else if (((flags & ScheissFlags::BeforeArticles) && token.type == Artikel) &&
+        } else if (((flags & ScheissFlags::BeforeArticles) && token.type == Artikel) &&
             peek_forward_token && (*peek_forward_token).type == Nomen) {
             spes = article_verscheissern(look_backward_token, token, peek_forward_token);
         } else if ((flags & ScheissFlags::BeforeNomen) && token.type == Nomen &&
