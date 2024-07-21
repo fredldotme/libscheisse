@@ -75,6 +75,31 @@ static const unsigned char question_mark = '?';
 static const unsigned char exclamation_mark = '!';
 static const unsigned char period = '.';
 
+struct Replacement {
+    std::string original;
+    std::string replacement;
+};
+
+static const std::array<Replacement, 1> replacements = {
+    Replacement{"Dreck", "Scheißdreck"}
+};
+
+static inline bool replacement_search(const std::string& word) {
+    for (const auto& replacement : replacements) {
+        if (replacement.original == word)
+            return true;
+    }
+    return false;
+}
+
+static inline Spe replace_token(const std::string& word) {
+    for (const auto& replacement : replacements) {
+        if (replacement.original == word)
+            return { replacement.replacement, false }; 
+    }
+    return { word, true };
+}
+
 static inline std::string to_lowercase(const std::string& source)
 {
     std::string ret;
@@ -711,7 +736,10 @@ std::string verscheissern(const std::vector<std::string>& input, const ScheissFl
         // Like "In Spe"
         std::vector<Spe> spes;
 
-        if (((flags & ScheissFlags::BeforeArticles) && token.type == Artikel) &&
+        if (replacement_search(token.word)) {
+            spes.push_back(replace_token(token.word));
+        }
+        else if (((flags & ScheissFlags::BeforeArticles) && token.type == Artikel) &&
             peek_forward_token && (*peek_forward_token).type == Nomen) {
             spes = article_verscheissern(look_backward_token, token, peek_forward_token);
         } else if ((flags & ScheissFlags::BeforeNomen) && token.type == Nomen &&
