@@ -505,7 +505,7 @@ static inline std::vector<Spe> adjective_verscheissern(const std::vector<TokenAn
             }
         };
    }
-   return { { token.word, false} };
+   return { { token.word, true } };
 }
 
 static inline std::string strip_punctuation(const std::string& word, TokenAnalysis& followup_token)
