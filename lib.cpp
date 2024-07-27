@@ -522,17 +522,10 @@ static inline std::vector<Spe> adjective_verscheissern(const std::vector<TokenAn
 {
     if (token.before_token && token.before_token->type == Artikel &&
         token.after_token && token.after_token->type == Nomen) {
-        auto prefix = random_scheiss(token);
-
-        if (prefix == alternatives_known[default_alternative].word) {
-            prefix = prefix + "-";
-        } else {
-            prefix = prefix + " ";
-        }
-
-        return { { prefix + token.word, false } };
-   }
-   return { { token.word, true } };
+        const auto prefix = random_scheiss(token) + "-";
+        return { {prefix + token.word, false} };
+    }
+    return { {token.word, true} };
 }
 
 static inline std::string strip_punctuation(const std::string& word, TokenAnalysis& followup_token)
