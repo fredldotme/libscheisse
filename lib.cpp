@@ -476,7 +476,7 @@ static inline bool nomen_check(const std::string& word)
 static inline bool adjective_check(const TokenAnalysis* before, const std::string& word)
 {
     return word.length() > 1 && std::tolower(word[0]) == word[0] &&
-            (!before || (before && before->type == Artikel));
+           (before && before->type == Artikel);
 }
 
 static inline std::vector<Spe> article_verscheissern(const TokenAnalysis* before, const TokenAnalysis& token, const TokenAnalysis* after)
@@ -519,12 +519,14 @@ static inline std::vector<Spe> nomen_verscheissern(const std::vector<TokenAnalys
 }
 
 static inline std::vector<Spe> adjective_verscheissern(const std::vector<TokenAnalysis>& analysis,
-                                                       const TokenAnalysis& token)
+                                                       const TokenAnalysis* before,
+                                                       const TokenAnalysis& token,
+                                                       const TokenAnalysis* after)
 {
     if (token.before_token && token.before_token->type == Artikel &&
-        token.after_token && token.after_token->type == Nomen) {
-        const auto prefix = random_scheiss(token) + "-";
-        return { {prefix + token.word, false} };
+        token.after_token && token.after_token->type == Nomen &&
+        token.type == Adjektiv) {
+        return { {token.word, true}, {random_scheiss(token), false} };
     }
     return { {token.word, true} };
 }
@@ -745,7 +747,7 @@ std::string verscheissern(const std::vector<std::string>& input, const ScheissFl
         } else if ((flags & ScheissFlags::BeforeAdjectives) && token.type == Adjektiv &&
                    /* TODO: Remove token_type check once smarter */
                    (token.token_type != SentenceBeginning)) {
-            spes = adjective_verscheissern(analysis, token);
+            spes = adjective_verscheissern(analysis, look_backward_token, token, peek_forward_token);
         } else {
             spes.push_back({token.word, true});
         }
