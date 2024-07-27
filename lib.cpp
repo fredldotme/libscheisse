@@ -1011,7 +1011,7 @@ std::string verscheissern(const std::vector<std::string>& input,
     // Like "In Spe"
     std::vector<Spe> spes;
 
-    if (replacement_search(token.word)) {
+    if ((flags & Replacements) && replacement_search(token.word)) {
       spes.push_back(replace_token(token.word));
     } else if (((flags & ScheissFlags::BeforeArticles) &&
                 token.type == Artikel) &&

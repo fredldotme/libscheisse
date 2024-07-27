@@ -72,7 +72,8 @@ enum ScheissFlags {
     RepeatArticle = (1 << 1),
     BeforeNomen = (1 << 2),
     BeforeAdjectives = (1 << 3),
-    Default = BeforeArticles | BeforeNomen | BeforeAdjectives
+    Replacements = (1 << 4),
+    Default = BeforeArticles | BeforeNomen | BeforeAdjectives | Replacements
 };
 
 struct TokenAnalysis {
@@ -87,6 +88,8 @@ struct TokenAnalysis {
     Case casus = Case_Unknown;
     DeclinationType declination_type = Declination_Unknown;
 };
+
+static ScheissFlags defaultScheissFlags() { return ScheissFlags::Default; };
 
 std::vector<TokenAnalysis> analyse(const std::vector<std::string>& input);
 std::vector<TokenAnalysis> analyse(const std::string& input);
