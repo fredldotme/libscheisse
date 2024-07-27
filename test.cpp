@@ -11,13 +11,15 @@ int main(int argc, char** argv)
                              "Das ist aber i.d.r egal wenn der Hopfen fehlt. "
                              "Des Vodkas reinster Vergleichspunkt ist die der Kartoffel nachgesagte Verarbeitung. "
                              "Und die dem Anton gehörende Trompete macht einen unguten Eindruck. "
-                             "Das traurige Entchen macht einen Bogen um das Thema.";
+                             "Das traurige Entchen macht einen Bogen um das Thema. "
+                             "Die am Bart klebende Sticker-Figur sieht aus, als würd sie gleich den Rotz vom Peter lecken.";
 
     std::cout << "Eingabe:" << std::endl;
     std::cout << test << std::endl;
 
     std::cout << std::endl;
 
+#if 1
     std::cout << "Analyse:" << std::endl;
     const auto analysis = analyse(test);
     for (const auto& token_analysis : analysis) {
@@ -30,6 +32,7 @@ int main(int argc, char** argv)
             std::cout << "\tDictating token: " << token_analysis.dictating_token->word << std::endl;
         std::cout << std::endl;
     }
+#endif
 
     std::cout << std::endl;
 

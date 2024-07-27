@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <map>
 
 #ifndef INDEVELOPMENT
 #define INDEVELOPMENT 0
@@ -250,6 +251,13 @@ static const std::array<std::string, 3> articles_dativ_singular_mixedflex = {
     "einem", "einer", "einem"};
 static const std::array<std::string, 3> articles_akkusativ_singular_mixedflex =
     {"einen", "eine", "ein"};
+
+// am, im, beim
+static const std::map<std::string, std::vector<std::string> > contractions = {
+    std::make_pair<std::string, std::vector<std::string> >("am", {"an", "dem"}),
+    std::make_pair<std::string, std::vector<std::string> >("im", {"in", "dem"}),
+    std::make_pair<std::string, std::vector<std::string> >("beim", {"bei", "dem"})
+};
 
 static inline bool article_search(const std::string& term) {
 #define TRY_RETURN_SEARCH(arr, term)       \
@@ -967,11 +975,28 @@ std::vector<TokenAnalysis> analyse(const std::string& input) {
   return analyse(split_string(input));
 }
 
+std::string prepared_input(const std::vector<std::string>& input) {
+  std::string ret;
+  for (const auto& word : input) {
+    if (contractions.find(word) != contractions.end()) {
+      for (const auto& value : contractions.at(word)) {
+        ret += value + " ";
+      }
+    } else {
+      ret += word + " ";
+    }
+  }
+  return ret;
+}
+
 std::string verscheissern(const std::vector<std::string>& input,
                           const ScheissFlags flags) {
   std::vector<std::string> ret;
   std::vector<Spe> previous_spes;
-  const auto analysis = analyse(input);
+  
+  // Prepare, increase context
+  const auto prepared = prepared_input(input);
+  const auto analysis = analyse(prepared);
 
   for (auto it = analysis.cbegin(); it != analysis.cend(); it++) {
     auto token = (*it);
