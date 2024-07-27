@@ -934,6 +934,24 @@ static inline TokenAnalysis create_token_analysis(
           genus,   casus,   declination_type};
 }
 
+static inline std::string prepared_input(const std::vector<std::string>& input) {
+    std::string ret;
+    for (const auto& word : input) {
+        if (contractions.find(word) != contractions.end()) {
+            for (const auto& value : contractions.at(word)) {
+                ret += value + " ";
+            }
+        } else {
+            ret += word + " ";
+        }
+    }
+    return ret;
+}
+
+// ######################################
+// # No static inlines beyond this line #
+// ######################################
+
 std::vector<TokenAnalysis> analyse(const std::vector<std::string>& input) {
   std::vector<TokenAnalysis> ret;
 
@@ -973,20 +991,6 @@ std::vector<TokenAnalysis> analyse(const std::vector<std::string>& input) {
 
 std::vector<TokenAnalysis> analyse(const std::string& input) {
   return analyse(split_string(input));
-}
-
-std::string prepared_input(const std::vector<std::string>& input) {
-  std::string ret;
-  for (const auto& word : input) {
-    if (contractions.find(word) != contractions.end()) {
-      for (const auto& value : contractions.at(word)) {
-        ret += value + " ";
-      }
-    } else {
-      ret += word + " ";
-    }
-  }
-  return ret;
 }
 
 std::string verscheissern(const std::vector<std::string>& input,
