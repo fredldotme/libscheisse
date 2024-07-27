@@ -80,8 +80,9 @@ struct Replacement {
     std::string replacement;
 };
 
-static const std::array<Replacement, 1> replacements = {
-    Replacement{"Dreck", "Scheißdreck"}
+static const std::array<Replacement, 2> replacements = {
+    Replacement{"Dreck", "Scheißdreck"},
+    Replacement{"drecks", "scheißdrecks"}
 };
 
 static inline bool replacement_search(const std::string& word) {
@@ -290,7 +291,7 @@ decide:
     return Genus_Unknown;
 }
 
-static inline int article_index_for_genus(const Genus genus)
+static inline int article_index_for_genus(const Genus& genus)
 {
     switch (genus) {
     case Male: return 0;
@@ -299,7 +300,7 @@ static inline int article_index_for_genus(const Genus genus)
     }
 }
 
-static inline Genus genus_for_article_index(const int index)
+static inline Genus genus_for_article_index(const int& index)
 {
     switch (index) {
     case 0: return Male;
