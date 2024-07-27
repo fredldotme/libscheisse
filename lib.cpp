@@ -520,15 +520,17 @@ static inline std::vector<Spe> nomen_verscheissern(const std::vector<TokenAnalys
 static inline std::vector<Spe> adjective_verscheissern(const std::vector<TokenAnalysis>& analysis,
                                                        const TokenAnalysis& token)
 {
-    if (token.before_token && token.before_token->token_type == SentenceBeginning &&
-        token.before_token->type == Artikel &&
+    if (token.before_token && token.before_token->type == Artikel &&
         token.after_token && token.after_token->type == Nomen) {
-        return {
-            {
-                "scheiss-" + token.word,
-                false
-            }
-        };
+        auto prefix = random_scheiss(token);
+
+        if (prefix == alternatives_known[default_alternative].word) {
+            prefix = prefix + "-";
+        } else {
+            prefix = prefix + " ";
+        }
+
+        return { { prefix + token.word, false } };
    }
    return { { token.word, true } };
 }
