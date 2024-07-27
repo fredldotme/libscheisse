@@ -11,6 +11,7 @@
 struct Spe {
   std::string word;
   bool regular;  // False means Verscheisserung
+  float confidence = 1.0f;
 };
 
 struct Alternative {
@@ -687,7 +688,8 @@ static inline bool adjective_check(const TokenAnalysis* before,
                                    const TokenAnalysis* after) {
   // TODO: Narrow down using after-token
   return word.length() > 1 && std::tolower(word[0]) == word[0] &&
-         (before && before->type == Artikel) /* && (after && after->type == Nomen)*/;
+         (before &&
+          before->type == Artikel) /* && (after && after->type == Nomen)*/;
 }
 
 static inline std::vector<Spe> article_verscheissern(
@@ -746,10 +748,11 @@ static inline std::vector<Spe> adjective_verscheissern(
 }
 
 static const std::array<unsigned char, 6> punctuations = {
-      ',', ':', ';', period, question_mark, exclamation_mark};
+    ',', ':', ';', period, question_mark, exclamation_mark};
 
 static inline bool is_punctuation(const std::string& word) {
-  return std::find(punctuations.begin(), punctuations.end(), static_cast<unsigned char>(word[0]));
+  return std::find(punctuations.begin(), punctuations.end(),
+                   static_cast<unsigned char>(word[0]));
 }
 
 static inline std::string strip_punctuation(const std::string& word,
@@ -859,11 +862,12 @@ static inline void build_relations(std::vector<TokenAnalysis>& analysis) {
   }
 }
 
-static inline TokenAnalysis create_token_analysis(const std::vector<std::string>& whole_input,
-                                                  std::vector<std::string>::const_iterator it,
-                                                  const TokenAnalysis* previous_token,
-                                                  const std::string& word,
-                                                  const TokenAnalysis* next_token) {
+static inline TokenAnalysis create_token_analysis(
+    const std::vector<std::string>& whole_input,
+    std::vector<std::string>::const_iterator it,
+    const TokenAnalysis* previous_token,
+    const std::string& word,
+    const TokenAnalysis* next_token) {
   Type type = Type_Unknown;
   Genus genus = Genus_Unknown;
   Case casus = Case_Unknown;
@@ -876,7 +880,7 @@ static inline TokenAnalysis create_token_analysis(const std::vector<std::string>
   else if (is_punctuation(word))
     token_type = Unmeaning;
   else
-    token_type = Word; 
+    token_type = Word;
 
   if (article_search(word)) {
     type = Artikel;
@@ -926,20 +930,27 @@ std::vector<TokenAnalysis> analyse(const std::vector<std::string>& input) {
   std::vector<TokenAnalysis> ret;
 
   for (auto it = input.cbegin(); it != input.cend(); it++) {
-    const auto previous_token =
-        ret.size() > 0 ? &ret[ret.size() - 1] : nullptr;
+    const auto previous_token = ret.size() > 0 ? &ret[ret.size() - 1] : nullptr;
 
     TokenAnalysis followup_token;
     const std::string word = strip_punctuation(*it, followup_token);
 
     // Prediction costs us a bit of additional processing
-    const auto imagined_token = create_token_analysis(input, it, previous_token, word, nullptr);
+    const auto imagined_token =
+        create_token_analysis(input, it, previous_token, word, nullptr);
     TokenAnalysis next_followup_token;
-    const std::string next_word = (it+1 != input.cend()) ? strip_punctuation(*(it+1), next_followup_token) : "";
-    const auto predicted_token = (it+1 != input.cend()) ?
-        create_token_analysis(input, it+1, &imagined_token, word, nullptr) : TokenAnalysis{};
+    const std::string next_word =
+        (it + 1 != input.cend())
+            ? strip_punctuation(*(it + 1), next_followup_token)
+            : "";
+    const auto predicted_token =
+        (it + 1 != input.cend())
+            ? create_token_analysis(input, it + 1, &imagined_token, word,
+                                    nullptr)
+            : TokenAnalysis{};
 
-    const auto token = create_token_analysis(input, it, previous_token, word, &predicted_token);
+    const auto token = create_token_analysis(input, it, previous_token, word,
+                                             &predicted_token);
     ret.push_back(token);
 
     if (followup_token.token_type != TokenType_Unknown) {
