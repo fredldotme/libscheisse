@@ -245,6 +245,7 @@ static const std::array<std::string, 3> articles_dativ_singular_known = {
     "dem", "der", "dem"};
 static const std::array<std::string, 3> articles_akkusativ_singular_known = {
     "den", "die", "das"};
+
 static const std::array<std::string, 3> articles_nominativ_singular_mixedflex =
     {"ein", "eine", "ein"};
 static const std::array<std::string, 3> articles_genitiv_singular_mixedflex = {
@@ -253,6 +254,15 @@ static const std::array<std::string, 3> articles_dativ_singular_mixedflex = {
     "einem", "einer", "einem"};
 static const std::array<std::string, 3> articles_akkusativ_singular_mixedflex =
     {"einen", "eine", "ein"};
+
+static const std::array<std::string, 3> articles_nominativ_singular_none =
+    {"kein", "keine", "kein"};
+static const std::array<std::string, 3> articles_genitiv_singular_none = {
+    "keines", "keiner", "keines"};
+static const std::array<std::string, 3> articles_dativ_singular_none = {
+    "keinem", "keiner", "keinem"};
+static const std::array<std::string, 3> articles_akkusativ_singular_none =
+    {"keinen", "keine", "kein"};
 
 // am, im, beim, usw.
 static const std::map<std::string, std::vector<std::string> > contractions = {
@@ -273,10 +283,16 @@ static inline bool article_search(const std::string& term) {
     TRY_RETURN_SEARCH(articles_genitiv_singular_known, term);
     TRY_RETURN_SEARCH(articles_dativ_singular_known, term);
     TRY_RETURN_SEARCH(articles_akkusativ_singular_known, term);
+
     TRY_RETURN_SEARCH(articles_nominativ_singular_mixedflex, term);
     TRY_RETURN_SEARCH(articles_genitiv_singular_mixedflex, term);
     TRY_RETURN_SEARCH(articles_dativ_singular_mixedflex, term);
     TRY_RETURN_SEARCH(articles_akkusativ_singular_mixedflex, term);
+
+    TRY_RETURN_SEARCH(articles_nominativ_singular_none, term);
+    TRY_RETURN_SEARCH(articles_genitiv_singular_none, term);
+    TRY_RETURN_SEARCH(articles_dativ_singular_none, term);
+    TRY_RETURN_SEARCH(articles_akkusativ_singular_none, term);
 #undef TRY_RETURN_SEARCH
 
     return false;
