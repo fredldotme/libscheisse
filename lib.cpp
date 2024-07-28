@@ -952,6 +952,10 @@ static inline TokenAnalysis create_token_analysis(
         type = Adverb;
     } else if (subjunction_search(word)) {
         type = Subjunktion;
+    } else if (pronomen_check(word)) {
+        type = Pronomen;
+    } else if (adjective_check(previous_token, word, next_token)) {
+        type = Adjektiv;
     }
     // Check whether its a Nomen later to avoid beginnings of sentences to be
     // misdetected.
@@ -961,10 +965,6 @@ static inline TokenAnalysis create_token_analysis(
             genus = (*previous_token).genus;
             casus = (*previous_token).casus;
         }
-    } else if (pronomen_check(word)) {
-        type = Pronomen;
-    } else if (adjective_check(previous_token, word, next_token)) {
-        type = Adjektiv;
     }
 
     return {nullptr, nullptr, dictating_token, word, token_type, type,
