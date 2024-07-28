@@ -89,7 +89,7 @@ struct TokenAnalysis {
     DeclinationType declination_type = Declination_Unknown;
 };
 
-static ScheissFlags defaultScheissFlags() { return ScheissFlags::Default; };
+static ScheissFlags defaultScheissFlags() { return ScheissFlags::Default; }
 
 std::vector<TokenAnalysis> analyse(const std::vector<std::string>& input);
 std::vector<TokenAnalysis> analyse(const std::string& input);

@@ -252,11 +252,12 @@ static const std::array<std::string, 3> articles_dativ_singular_mixedflex = {
 static const std::array<std::string, 3> articles_akkusativ_singular_mixedflex =
     {"einen", "eine", "ein"};
 
-// am, im, beim
+// am, im, beim, usw.
 static const std::map<std::string, std::vector<std::string> > contractions = {
     std::make_pair<std::string, std::vector<std::string> >("am", {"an", "dem"}),
     std::make_pair<std::string, std::vector<std::string> >("im", {"in", "dem"}),
-    std::make_pair<std::string, std::vector<std::string> >("beim", {"bei", "dem"})
+    std::make_pair<std::string, std::vector<std::string> >("beim", {"bei", "dem"}),
+    std::make_pair<std::string, std::vector<std::string> >("vom", {"von", "dem"})
 };
 
 static inline bool article_search(const std::string& term) {
@@ -975,6 +976,7 @@ std::vector<TokenAnalysis> analyse(const std::vector<std::string>& input) {
                                     nullptr)
             : TokenAnalysis{};
 
+    // The final token we are going to track
     const auto token = create_token_analysis(input, it, previous_token, word,
                                              &predicted_token);
     ret.push_back(token);
