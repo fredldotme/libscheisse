@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+namespace scheisse {
+
 enum Tense {
     Tense_Unknown = 0,
     Praesens,
@@ -97,4 +99,5 @@ std::vector<TokenAnalysis> analyse(const std::string& input);
 std::string verscheissern(const std::vector<std::string>& input, const ScheissFlags flags = Default);
 std::string verscheissern(const std::string& input, const ScheissFlags flags = Default);
 
+}
 #endif

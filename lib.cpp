@@ -8,6 +8,8 @@
 #define INDEVELOPMENT 0
 #endif
 
+namespace scheisse {
+
 // As in "In Spe", determines potentially resulting word
 struct Spe {
   std::string word;
@@ -271,6 +273,10 @@ static inline bool article_search(const std::string& term) {
   TRY_RETURN_SEARCH(articles_genitiv_singular_known, term);
   TRY_RETURN_SEARCH(articles_dativ_singular_known, term);
   TRY_RETURN_SEARCH(articles_akkusativ_singular_known, term);
+  TRY_RETURN_SEARCH(articles_nominativ_singular_mixedflex, term);
+  TRY_RETURN_SEARCH(articles_genitiv_singular_mixedflex, term);
+  TRY_RETURN_SEARCH(articles_dativ_singular_mixedflex, term);
+  TRY_RETURN_SEARCH(articles_akkusativ_singular_mixedflex, term);
 #undef TRY_RETURN_SEARCH
 
   return false;
@@ -1061,4 +1067,6 @@ std::string verscheissern(const std::vector<std::string>& input,
 
 std::string verscheissern(const std::string& input, const ScheissFlags flags) {
   return verscheissern(split_string(input));
+}
+
 }

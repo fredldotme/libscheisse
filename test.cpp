@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+using namespace scheisse;
+
 int main(int argc, char** argv)
 {
     time_t current_time;
@@ -12,7 +14,8 @@ int main(int argc, char** argv)
                              "Des Vodkas reinster Vergleichspunkt ist die der Kartoffel nachgesagte Verarbeitung. "
                              "Und die dem Anton gehörende Trompete macht einen unguten Eindruck. "
                              "Das traurige Entchen macht einen Bogen um das Thema. "
-                             "Die am Bart klebende Sticker-Figur sieht aus, als würd sie gleich den Rotz vom Peter lecken.";
+                             "Die am Bart klebende Sticker-Figur sieht aus, als würd sie gleich den Rotz vom Peter lecken. "
+                             "Der Pisslaken stinkt nach einem Hitschaden mit einem Linkshaken.";
 
     std::cout << "Eingabe:" << std::endl;
     std::cout << test << std::endl;
