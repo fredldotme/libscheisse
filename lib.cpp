@@ -1074,7 +1074,7 @@ std::string verscheissern(const std::vector<std::string>& input,
         const auto look_backward_token =
             it != analysis.cbegin() ? &(*(it - 1)) : nullptr;
         const auto peek_forward_token =
-            it != analysis.cend() ? &(*(it + 1)) : nullptr;
+            (it + 1) != analysis.cend() ? &(*(it + 1)) : nullptr;
 
         // Capitalize beginning of a sentence
         if (!token.word.empty() && token.token_type == SentenceBeginning)
