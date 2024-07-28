@@ -1066,7 +1066,7 @@ std::string verscheissern(const std::vector<std::string>& input,
 }
 
 std::string verscheissern(const std::string& input, const ScheissFlags flags) {
-  return verscheissern(split_string(input));
+  return verscheissern(split_string(input), flags);
 }
 
 }
