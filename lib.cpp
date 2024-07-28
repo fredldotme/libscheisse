@@ -940,9 +940,10 @@ static inline TokenAnalysis create_token_analysis(
     Case casus = Case_Unknown;
     DeclinationType declination_type = Declination_Unknown;
     TokenAnalysis* dictating_token = nullptr;
-    TokenType token_type =
-        (it == whole_input.cbegin()) ? SentenceBeginning : TokenType_Unknown;
+    TokenType token_type = TokenType_Unknown;
     if (previous_token && (*previous_token).token_type == SentenceEnd)
+        token_type = SentenceBeginning;
+    else if (it == whole_input.cbegin())
         token_type = SentenceBeginning;
     else if (is_punctuation(word))
         token_type = Unmeaning;
