@@ -690,7 +690,9 @@ static inline bool subjunction_search(const std::string& term) {
 }
 
 #if INDEVELOPMENT
-static inline bool verb_search(const std::string& term) {}
+static inline bool verb_search(const std::string& term) {
+    return false;
+}
 #endif
 
 static inline bool nomen_check(const std::string& word) {
