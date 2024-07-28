@@ -784,6 +784,14 @@ static inline std::vector<Spe> adjective_verscheissern(
     return {{token.word, true}};
 }
 
+#if INDEVELOPMENT
+static inline std::vector<Spe> praeposition_verscheissern(
+    const std::vector<TokenAnalysis>& analysis,
+    const TokenAnalysis& token) {
+    return {{token.word, true}};
+}
+#endif
+
 static inline std::vector<Spe> pronomen_verscheissern(
     const std::vector<TokenAnalysis>& analysis,
     const TokenAnalysis& token) {
@@ -954,7 +962,11 @@ static inline TokenAnalysis create_token_analysis(
         type = Subjunktion;
     } else if (pronomen_check(word)) {
         type = Pronomen;
-    } else if (adjective_check(previous_token, word, next_token)) {
+    } else if (preposition_search(word)) {
+        type = Praeposition;
+    }
+    // adjective_check is more permissive, do it lastly for all-lowercase input
+    else if (adjective_check(previous_token, word, next_token)) {
         type = Adjektiv;
     }
     // Check whether its a Nomen later to avoid beginnings of sentences to be
@@ -1075,7 +1087,14 @@ std::string verscheissern(const std::vector<std::string>& input,
         } else if ((flags & ScheissFlags::WithPronomen) &&
                    token.type == Pronomen) {
             spes = pronomen_verscheissern(analysis, token);
-        } else {
+        }
+#if INDEVELOPMENT
+        else if ((flags & ScheissFlags::WithPraepositions) &&
+                   token.type = Praeposition) {
+            spes = praeposition_verscheissern(analysis, token);
+        }
+#endif
+        else {
             spes.push_back({token.word, true});
         }
 

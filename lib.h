@@ -76,7 +76,9 @@ enum ScheissFlags {
     BeforeAdjectives = (1 << 3),
     Replacements = (1 << 4),
     WithPronomen = (1 << 5),
-    Default = BeforeArticles | BeforeNomen | BeforeAdjectives | Replacements | WithPronomen
+    WithPraepositions = (1 << 6),
+    Default = BeforeArticles | BeforeNomen | BeforeAdjectives |
+              Replacements | WithPronomen | WithPraepositions
 };
 
 struct TokenAnalysis {
