@@ -15,7 +15,8 @@ int main(int argc, char** argv)
                              "Und die dem Anton gehörende Trompete macht einen unguten Eindruck. "
                              "Das traurige Entchen macht einen Bogen um das Thema. "
                              "Die am Bart klebende Sticker-Figur sieht aus, als würd sie gleich den Rotz vom Peter lecken. "
-                             "Das Pisslaken stinkt nach einem Hitschaden mit einem Linkshaken.";
+                             "Das Pisslaken stinkt nach einem Hitschaden mit einem Linkshaken. "
+                             "Hier hat sich meine Katze gedacht, es wäre eine gute Idee die Vase runterzuwerfen.";
 
     std::cout << "Eingabe:" << std::endl;
     std::cout << test << std::endl;
