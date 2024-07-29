@@ -811,7 +811,14 @@ static inline std::vector<Spe> praeposition_verscheissern(
 static inline std::vector<Spe> pronomen_verscheissern(
     const std::vector<TokenAnalysis>& analysis,
     const TokenAnalysis& token) {
+#if INDEVELOPMENT
+    if (token.after_token && token.after_token->type == Artikel &&
+        token.after_token->after_token && token.after_token->after_token->type == Nomen)
+        return {{token.word, true}};
     return {{token.word, true}, {random_scheiss(token), false}};
+#else
+    return {{token.word, true}};
+#endif
 }
 
 static const std::array<unsigned char, 6> punctuations = {
