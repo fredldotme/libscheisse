@@ -88,17 +88,14 @@ static const unsigned char question_mark = '?';
 static const unsigned char exclamation_mark = '!';
 static const unsigned char period = '.';
 
-struct Replacement {
-    std::string original;
-    std::string replacement;
-};
+typedef std::pair<std::string, std::string> Replacement;
 
 static const std::array<Replacement, 2> replacements = {
     Replacement{"Dreck", "Scheißdreck"}, Replacement{"drecks", "scheißdrecks"}};
 
 static inline bool replacement_search(const std::string& word) {
     for (const auto& replacement : replacements) {
-        if (replacement.original == word)
+        if (replacement.first == word)
             return true;
     }
     return false;
@@ -106,8 +103,8 @@ static inline bool replacement_search(const std::string& word) {
 
 static inline Spe replace_token(const std::string& word) {
     for (const auto& replacement : replacements) {
-        if (replacement.original == word)
-            return {replacement.replacement, false};
+        if (replacement.first == word)
+            return {replacement.second, false};
     }
     return {word, true};
 }
@@ -1174,7 +1171,7 @@ std::string verscheissern(const std::vector<std::string>& input,
 
         // Avoid duplicates
         for (auto dit = find_duplicate_spes(spes, previous_spes);
-             dit != spes.cend();) {
+            dit != spes.cend();) {
             if (!((*dit).regular))
                 dit = spes.erase(dit);
             else
