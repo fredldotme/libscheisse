@@ -16,7 +16,8 @@ int main(int argc, char** argv)
                              "Das traurige Entchen macht einen Bogen um das Thema. "
                              "Die am Bart klebende Sticker-Figur sieht aus, als würd sie gleich den Rotz vom Peter lecken. "
                              "Das Pisslaken stinkt nach einem Hitschaden mit einem Linkshaken. "
-                             "Hier hat sich meine Katze gedacht, es wäre eine gute Idee die Vase runterzuwerfen.";
+                             "Hier hat sich meine Katze gedacht, es wäre eine gute Idee die Vase runterzuwerfen. "
+                             "Die nicht von der Hand zu weisende Problematik stinkt.";
 
     std::cout << "Eingabe:" << std::endl;
     std::cout << test << std::endl;
@@ -41,6 +42,6 @@ int main(int argc, char** argv)
     std::cout << std::endl;
 
     std::cout << "Verscheißert:" << std::endl;
-    std::cout << verscheissern(test) << std::endl;
+    std::cout << verscheissern(test, static_cast<ScheissFlags>(ScheissFlags::Default | ScheissFlags::Debug)) << std::endl;
     return 0;
 }
