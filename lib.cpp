@@ -276,6 +276,37 @@ static const std::array<std::string, 3> articles_dativ_singular_none = {
 static const std::array<std::string, 3> articles_akkusativ_singular_none =
     {"keinen", "keine", "kein"};
 
+
+static const std::map<std::string, unsigned int> calculate_article_occurances() {
+    std::map<std::string, unsigned int> ret;
+
+#define CALCULATE(arr) \
+    for (const auto& article : arr) { \
+        const auto curr = std::find(arr.begin(), arr.end(), article) != arr.end() ? ret[article] : 0; \
+        ret[article] = curr + 1; \
+    }
+
+    CALCULATE(articles_nominativ_singular_known);
+    CALCULATE(articles_genitiv_singular_known);
+    CALCULATE(articles_dativ_singular_known);
+    CALCULATE(articles_akkusativ_singular_known);
+
+    CALCULATE(articles_nominativ_singular_mixedflex);
+    CALCULATE(articles_genitiv_singular_mixedflex);
+    CALCULATE(articles_dativ_singular_mixedflex);
+    CALCULATE(articles_akkusativ_singular_mixedflex);
+
+    CALCULATE(articles_nominativ_singular_none);
+    CALCULATE(articles_genitiv_singular_none);
+    CALCULATE(articles_dativ_singular_none);
+    CALCULATE(articles_akkusativ_singular_none);
+#undef CALCULATE
+
+    return ret;
+}
+static const std::map<std::string, unsigned int> article_occurances = \
+    calculate_article_occurances();
+
 // am, im, beim, usw.
 static const std::map<std::string, std::vector<std::string> > contractions = {
     std::make_pair<std::string, std::vector<std::string> >("am", {"an", "dem"}),
@@ -770,13 +801,15 @@ static inline std::vector<Spe> article_verscheissern(
         (after && after->type == Artikel)) {
         ret.push_back({alternatives_known[default_alternative].word, false, 1.0f, ArticleReason});
     } else {
-#if INDEVELOPMENT
-        const auto scheiss = random_scheiss(token);
+        float confidence = 1.0f;
+        if (article_occurances.find(token.word) != article_occurances.end())
+            confidence = 1 / article_occurances.at(token.word);
+
+        const auto scheiss = confidence > 0.5f ?
+                                 random_scheiss(token) :
+                                 alternatives_known[default_alternative].word;
         if (!scheiss.empty())
-            ret.push_back({scheiss, false, 1.0f, ArticleReason});
-#else
-        ret.push_back({alternatives_known[default_alternative].word, false, 1.0f, ArticleReason});
-#endif
+            ret.push_back({scheiss, false, confidence, ArticleReason});
     }
     return ret;
 }
