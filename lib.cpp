@@ -810,7 +810,7 @@ static inline std::vector<Spe> article_verscheissern(
     } else {
         float confidence = 1.0f;
         if (article_occurances.find(token.word) != article_occurances.end())
-            confidence = 1 / article_occurances.at(token.word);
+            confidence = 1.0f / article_occurances.at(token.word);
 
         const auto scheiss = confidence > 0.5f ?
                                  random_scheiss(token) :
@@ -1191,7 +1191,7 @@ std::string verscheissern(const std::vector<std::string>& input,
         // Debug if necessary
         if (flags & ScheissFlags::Debug) {
             for (const auto& spe : spes) {
-                std::cerr << "Spe: '" << spe.word << "', reason: " << spe.reason << std::endl;
+                std::cerr << "Spe: '" << spe.word << "', reason: " << spe.reason << ", confidence: " << spe.confidence << std::endl;
             }
         }
 
