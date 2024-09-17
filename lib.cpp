@@ -277,7 +277,7 @@ static const std::array<std::string, 3> articles_akkusativ_singular_none =
     {"keinen", "keine", "kein"};
 
 
-static const std::map<std::string, unsigned int> calculate_article_occurances() {
+static inline const std::map<std::string, unsigned int> calculate_article_occurances() {
     std::map<std::string, unsigned int> ret;
 
 #define CALCULATE(arr) \
