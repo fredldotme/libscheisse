@@ -81,7 +81,7 @@ static const int default_alternative = 0;
 // Coin toss moment: Common prefix to avoid over-selecting similar alternatives
 // TODO: Adapt users to an array.size() > 1
 static const std::array<std::string, 1> alternative_prefixes = {
-    "besch"  // beschissener, beschissene
+    "beschissene"  // beschissener, beschissene, beschissenes ...
 };
 
 static const unsigned char question_mark = '?';
@@ -91,7 +91,9 @@ static const unsigned char period = '.';
 typedef std::pair<std::string, std::string> Replacement;
 
 static const std::array<Replacement, 2> replacements = {
-    Replacement{"Dreck", "Scheißdreck"}, Replacement{"drecks", "scheißdrecks"}};
+    Replacement{"Dreck", "Scheißdreck"},
+    Replacement{"drecks", "scheißdrecks"}
+};
 
 static inline bool replacement_search(const std::string& word) {
     for (const auto& replacement : replacements) {
@@ -143,7 +145,7 @@ static inline bool contains_alternative(
 #define TRY_RETURN_IF_FOUND(arr, term, found_alternative)      \
     for (const auto& alternative : arr) {                        \
             if (term.find(alternative.word) != std::string::npos &&    \
-                                                                           alternative.word.find(alternative_prefixes[0]) == 0) { \
+                alternative.word.find(alternative_prefixes[0]) == 0) { \
                 if (found_alternative)                                   \
                     *found_alternative = alternative.word;                 \
                 return true;                                             \
@@ -305,11 +307,19 @@ static const std::map<std::string, unsigned int> article_occurances = \
     calculate_article_occurances();
 
 // am, im, beim, usw.
-static const std::map<std::string, std::vector<std::string> > contractions = {
-    std::make_pair<std::string, std::vector<std::string> >("am", {"an", "dem"}),
-    std::make_pair<std::string, std::vector<std::string> >("im", {"in", "dem"}),
-    std::make_pair<std::string, std::vector<std::string> >("beim", {"bei", "dem"}),
-    std::make_pair<std::string, std::vector<std::string> >("vom", {"von", "dem"})
+typedef std::pair<std::string, std::vector<std::string>> Contraction;
+typedef std::map<Contraction::first_type, Contraction::second_type> ContractionMap;
+
+static inline Contraction make_contraction(const std::string& original,
+                                           const std::vector<std::string>& sequence) {
+    return std::make_pair(original, sequence);
+}
+
+static const ContractionMap contractions = {
+    make_contraction("am", {"an", "dem"}),
+    make_contraction("im", {"in", "dem"}),
+    make_contraction("beim", {"bei", "dem"}),
+    make_contraction("vom", {"von", "dem"})
 };
 
 static inline bool article_search(const std::string& term) {
