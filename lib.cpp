@@ -10,11 +10,22 @@
 
 namespace scheisse {
 
+// Which procedure created the Verscheisserung
+enum VerscheisserungsReason {
+    ReasonUnknown = 0,
+    ArticleReason,
+    NomenReason,
+    AdjectiveReason,
+    PraepositionReason,
+    PronomenReason
+};
+
 // As in "In Spe", determines potentially resulting word
 struct Spe {
     std::string word;
     bool regular;  // False means Verscheisserung
     float confidence = 1.0f;
+    VerscheisserungsReason reason = ReasonUnknown;
 };
 
 struct Alternative {
@@ -756,11 +767,11 @@ static inline std::vector<Spe> article_verscheissern(
     // with the generic fallback. Duplicate Spes will be filtered later
     if ((before && before->type == Artikel) ||
         (after && after->type == Artikel)) {
-        ret.push_back({alternatives_known[default_alternative].word, false});
+        ret.push_back({alternatives_known[default_alternative].word, false, 1.0f, ArticleReason});
     } else {
         const auto scheiss = random_scheiss(token);
         if (!scheiss.empty())
-            ret.push_back({scheiss, false});
+            ret.push_back({scheiss, false, 1.0f, ArticleReason});
     }
     return ret;
 }
@@ -784,7 +795,7 @@ static inline std::vector<Spe> nomen_verscheissern(
 
     const auto scheiss = random_scheiss(token);
     if (!scheiss.empty())
-        ret.push_back({scheiss, false});
+        ret.push_back({scheiss, false, 1.0f, NomenReason});
     ret.push_back({token.word, true});
     return ret;
 }
@@ -795,7 +806,7 @@ static inline std::vector<Spe> adjective_verscheissern(
     if (token.before_token && token.before_token->type == Artikel &&
         token.after_token && token.after_token->type == Nomen &&
         token.type == Adjektiv) {
-        return {{random_scheiss(token) + "-" + token.word, true}};
+        return {{random_scheiss(token) + "-" + token.word, false, 1.0f, AdjectiveReason}};
     }
     return {{token.word, true}};
 }
@@ -804,7 +815,7 @@ static inline std::vector<Spe> adjective_verscheissern(
 static inline std::vector<Spe> praeposition_verscheissern(
     const std::vector<TokenAnalysis>& analysis,
     const TokenAnalysis& token) {
-    return {{token.word, true}};
+    return {{token.word, false, 1.0f, PraepositionReason}};
 }
 #endif
 
@@ -815,7 +826,7 @@ static inline std::vector<Spe> pronomen_verscheissern(
     if (token.after_token && token.after_token->type == Artikel &&
         token.after_token->after_token && token.after_token->after_token->type == Nomen)
         return {{token.word, true}};
-    return {{token.word, true}, {random_scheiss(token), false}};
+    return {{token.word, true}, {random_scheiss(token), false, 1.0f, PronomenReason}};
 #else
     return {{token.word, true}};
 #endif
