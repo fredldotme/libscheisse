@@ -77,6 +77,7 @@ enum ScheissFlags {
     Replacements = (1 << 4),
     WithPronomen = (1 << 5),
     WithPraepositions = (1 << 6),
+    Debug = (1 << 7),
     Default = BeforeArticles | BeforeNomen | BeforeAdjectives |
               Replacements | WithPronomen | WithPraepositions
 };

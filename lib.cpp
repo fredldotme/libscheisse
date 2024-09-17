@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <map>
+#include <iostream>
 
 #ifndef INDEVELOPMENT
 #define INDEVELOPMENT 0
@@ -769,9 +770,13 @@ static inline std::vector<Spe> article_verscheissern(
         (after && after->type == Artikel)) {
         ret.push_back({alternatives_known[default_alternative].word, false, 1.0f, ArticleReason});
     } else {
+#if INDEVELOPMENT
         const auto scheiss = random_scheiss(token);
         if (!scheiss.empty())
             ret.push_back({scheiss, false, 1.0f, ArticleReason});
+#else
+        ret.push_back({alternatives_known[default_alternative].word, false, 1.0f, ArticleReason});
+#endif
     }
     return ret;
 }
@@ -1141,6 +1146,13 @@ std::string verscheissern(const std::vector<std::string>& input,
                 dit = spes.erase(dit);
             else
                 ++dit;
+        }
+
+        // Debug if necessary
+        if (flags & ScheissFlags::Debug) {
+            for (const auto& spe : spes) {
+                std::cerr << "Spe: '" << spe.word << "', reason: " << spe.reason << std::endl;
+            }
         }
 
         // Add to the result(s)
